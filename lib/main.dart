@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'Authentication/splash_screen.dart';
 import 'firebase_options.dart';
-import 'package:final_year_project/Authentication/Login_Screen.dart';
+import 'package:final_year_project/Authentication/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

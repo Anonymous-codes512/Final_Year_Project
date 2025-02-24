@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:final_year_project/child_pages/Kids_screens/games/New_Game.dart';
-import 'Addition_Game/Kids_Level_Screen.dart';
-import 'car_game/Car_Level_Selection_Screen.dart';
+import 'Addition_Game/kids_level_screen.dart';
+import 'car_game/car_level_selection_Screen.dart';
 import 'package:final_year_project/child_pages/Kids_screens/games/shape_game/screens_ShapeGame/shape_splash_screen.dart';
 
 class NumbersPage extends StatefulWidget {
@@ -115,12 +114,12 @@ class _NumbersPageState extends State<NumbersPage>
                           builder: (context) => CarLevelSelectionScreen()),
                     );
                   }),
-                  buildGameButton(context, 'New Game', Icons.add_circle, () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SplashScreen()),
-                    );
-                  }),
+                  // buildGameButton(context, 'New Game', Icons.add_circle, () {
+                  //   Navigator.push(
+                  //     context,
+                  //     MaterialPageRoute(builder: (context) => SplashScreen()),
+                  //   );
+                  // }),
                 ],
               ),
               const SizedBox(height: 20),

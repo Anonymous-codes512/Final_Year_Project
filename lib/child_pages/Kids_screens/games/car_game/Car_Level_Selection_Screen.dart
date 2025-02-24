@@ -48,7 +48,10 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                     Icons.looks_one,
                     'Start with simple levels!',
                     Colors.green.shade400,
-                    KidCarGame(),
+                    KidCarGame(
+                      level: 'Easy',
+                      carImage: 'assets/games/green car.png',
+                    ),
                   ),
                   const SizedBox(
                     height: 20,
@@ -59,7 +62,10 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                     Icons.looks_two,
                     'Challenge yourself a bit more!',
                     Colors.orange.shade400,
-                    KidCarGame(),
+                    KidCarGame(
+                      level: 'Medium',
+                      carImage: 'assets/games/orange car.png',
+                    ),
                   ),
                   const SizedBox(
                     height: 20,
@@ -70,7 +76,10 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                     Icons.trending_up,
                     'Get ready for tough challenges!',
                     Colors.red.shade400,
-                    KidCarGame(),
+                    KidCarGame(
+                      level: 'Hard',
+                      carImage: 'assets/games/red car.png',
+                    ),
                   ),
 
                   // _buildLevelCard(

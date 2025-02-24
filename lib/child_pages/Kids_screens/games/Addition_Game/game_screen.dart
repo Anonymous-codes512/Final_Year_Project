@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:final_year_project/child_pages/Kids_screens/games/Game_Result_Screen.dart';
+import 'package:final_year_project/child_pages/Kids_screens/games/Addition_Game/Game_Result_Screen.dart';
 import 'dart:math';
 import 'dart:async';
 

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:final_year_project/child_pages/Kids_screens/profile/profile_kid.dart';
 import 'package:final_year_project/child_pages/Kids_screens/shapes_reading/shape_page.dart';
-import '../../Authentication/Login_Screen.dart';
+import '../../Authentication/login_screen.dart';
 import 'Progress_page/progress_screen.dart';
 import 'Reading_pages/Reading.dart';
 import 'games/games_page.dart';

@@ -2,15 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class Quiz_Screen extends StatefulWidget {
+class QuizScreen extends StatefulWidget {
   final int level;
-  const Quiz_Screen({super.key, required this.level});
+  const QuizScreen({super.key, required this.level});
 
   @override
   _QuizScreenState createState() => _QuizScreenState();
 }
 
-class _QuizScreenState extends State<Quiz_Screen> {
+class _QuizScreenState extends State<QuizScreen> {
   final List<Map<String, String>> questions = [
     {
       "question": "Do you have difficulty reading graphs or charts?",

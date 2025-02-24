@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore import for role saving
-import '../Auth_Service/Auth_service_Screen.dart';
-import 'Login_Screen.dart';
+import '../Auth_Service/auth_service_screen.dart';
+import 'login_screen.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});

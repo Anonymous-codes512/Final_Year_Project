@@ -80,7 +80,7 @@ class _GroupChatState extends State<GroupChat> {
   Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty || !_hasJoinedGroup) return;
 
-    final String userName = _currentUser!.email!.split('@')[0] ?? "Anonymous";
+    final String userName = _currentUser!.email!.split('@')[0];
     final String messageText = _messageController.text.trim();
 
     try {
@@ -150,8 +150,7 @@ class _GroupChatState extends State<GroupChat> {
 
                   final messages =
                       List<Map<String, dynamic>>.from(data['messages']);
-                  final userName =
-                      _currentUser!.email!.split('@')[0] ?? "Anonymous";
+                  final userName = _currentUser!.email!.split('@')[0];
 
                   return ListView.builder(
                     controller: _scrollController,

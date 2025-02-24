@@ -5,8 +5,9 @@ import 'car_game.dart';
 
 class CarResultScreen extends StatefulWidget {
   final int score;
+  final String level; // Added level parameter
 
-  const CarResultScreen({super.key, required this.score});
+  const CarResultScreen({super.key, required this.score, required this.level});
 
   @override
   _CarResultScreenState createState() => _CarResultScreenState();
@@ -19,15 +20,15 @@ class _CarResultScreenState extends State<CarResultScreen> {
   @override
   void initState() {
     super.initState();
-    fetchHighestScore(); // Fetch the current highest score when the screen is initialized
+    fetchHighestScore();
   }
 
   Future<void> fetchHighestScore() async {
     try {
       String? userId = FirebaseAuth.instance.currentUser?.uid;
-
       final firestore = FirebaseFirestore.instance;
-      const String gameName = "car_game"; // Game name for car game
+      // Use level-specific document ID.
+      final String gameDocId = "car_game_${widget.level.toLowerCase()}";
 
       final gameDoc = firestore
           .collection('users')
@@ -35,10 +36,9 @@ class _CarResultScreenState extends State<CarResultScreen> {
           .collection('kids_data')
           .doc('games')
           .collection('game_scores')
-          .doc(gameName);
+          .doc(gameDocId);
 
       final gameData = await gameDoc.get();
-
       if (gameData.exists) {
         setState(() {
           highestScore = gameData['highestScore'] ?? 0;
@@ -52,9 +52,9 @@ class _CarResultScreenState extends State<CarResultScreen> {
   Future<void> saveGameData(int score) async {
     try {
       String? userId = FirebaseAuth.instance.currentUser?.uid;
-
       final firestore = FirebaseFirestore.instance;
-      const String gameName = "car_game"; // Game name for car game
+      // Use level-specific document ID.
+      final String gameDocId = "car_game_${widget.level.toLowerCase()}";
 
       final gameDoc = firestore
           .collection('users')
@@ -62,18 +62,16 @@ class _CarResultScreenState extends State<CarResultScreen> {
           .collection('kids_data')
           .doc('games')
           .collection('game_scores')
-          .doc(gameName);
+          .doc(gameDocId);
 
       final gameData = await gameDoc.get();
-
       if (gameData.exists) {
         List<int> lastScores = List<int>.from(gameData['lastScores'] ?? []);
         int currentHighestScore = gameData['highestScore'] ?? 0;
 
-        // Check if the new score is higher than the current highest score
         if (score > currentHighestScore) {
           currentHighestScore = score;
-          isNewHighestScore = true; // Set flag for new highest score
+          isNewHighestScore = true;
         }
 
         lastScores.add(score);
@@ -87,12 +85,10 @@ class _CarResultScreenState extends State<CarResultScreen> {
           'lastPlayed': FieldValue.serverTimestamp(),
         });
 
-        // Update the highest score in the UI
         setState(() {
           highestScore = currentHighestScore;
         });
 
-        // Show congratulatory message when a new highest score is achieved
         if (isNewHighestScore) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -107,7 +103,6 @@ class _CarResultScreenState extends State<CarResultScreen> {
           'lastScores': [score],
           'lastPlayed': FieldValue.serverTimestamp(),
         });
-
         setState(() {
           highestScore = score;
         });
@@ -120,89 +115,115 @@ class _CarResultScreenState extends State<CarResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFAF7),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.emoji_events, size: 100, color: Colors.yellow),
-                const SizedBox(height: 16),
-                const Text(
-                  "Game Over!",
-                  style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Your Score: ${widget.score}",
-                  style: const TextStyle(fontSize: 24, color: Colors.red),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Highest Score: $highestScore",
-                  style: const TextStyle(fontSize: 24, color: Colors.green),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    saveGameData(widget
-                        .score); // Save the score and check if it’s a new high score
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => KidCarGame()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+      // Gradient background for a modern look.
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.lightBlueAccent,
+              const Color.fromARGB(255, 111, 200, 241)
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Card(
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              color: Colors.white,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.emoji_events,
+                        size: 100, color: Colors.amber),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Game Over!",
+                      style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue),
                     ),
-                  ),
-                  child: const Text(
-                    "Restart",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    saveGameData(widget
-                        .score); // Save the score and check if it’s a new high score
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Your Score: ${widget.score}",
+                      style: const TextStyle(fontSize: 24, color: Colors.red),
                     ),
-                  ),
-                  child: const Text(
-                    "Exit",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Highest Score (${widget.level}): $highestScore",
+                      style: const TextStyle(fontSize: 24, color: Colors.green),
+                    ),
+                    if (isNewHighestScore)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "New High Score!",
+                          style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.purple,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            saveGameData(widget.score);
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => KidCarGame(
+                                        level: widget.level,
+                                        carImage: 'assets/games/green car.png',
+                                      )),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Restart",
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            saveGameData(widget.score);
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Exit",
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

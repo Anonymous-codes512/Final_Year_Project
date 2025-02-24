@@ -1,11 +1,13 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:final_year_project/child_pages/first_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../Auth_Service/Auth_service_Screen.dart';
 import '../Parent_pages/Parent_home_screen.dart';
-import '../child_pages/First_page.dart';
+import 'forget_password_page.dart';
 import '../psychiatrist_pages/psychiatrist_Home_Page.dart';
-import 'Forget_password_page.dart';
 import 'Registration_Screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -71,15 +73,9 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       // Convert age
-      final age = userData['age'] is int
-          ? userData['age'] as int
-          : int.tryParse(userData['age']?.toString() ?? '') ?? 0;
 
       String role = userData['role'] as String;
       String username = userData['username'] ?? userData['name'] ?? '';
-
-      String parentId = userData['parentId'] ?? '';
-      String doctorId = userData['doctorId'] ?? '';
 
       if (role.toLowerCase() != _selectedRole!.toLowerCase()) {
         setState(() {

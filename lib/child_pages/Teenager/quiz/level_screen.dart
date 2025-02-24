@@ -1,8 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:final_year_project/child_pages/Teenager/quiz/quiz.dart';
-import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level2.dart';
-import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level3.dart';
+import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level_2.dart';
+import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level_3.dart';
 import 'package:flutter/material.dart';
 
 class LevelScreen extends StatelessWidget {
@@ -68,7 +68,7 @@ class LevelScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Quiz_Screen(level: 1),
+                          builder: (context) => const QuizScreen(level: 1),
                         ),
                       );
                     },
@@ -87,7 +87,7 @@ class LevelScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Quiz_Screen2(level: 2),
+                          builder: (context) => const QuizScreen2(level: 2),
                         ),
                       );
                     },
