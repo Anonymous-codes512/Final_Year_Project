@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
+  firebase_app_check: ^0.3.2+3
   cloud_firestore: ^5.5.0
   dash_chat_2: ^0.0.21 
   http: ^1.0.0    
@@ -109,6 +110,8 @@ flutter:
     - assets/
     - assets/shapes/
     - assets/images/
+    - assets/stats.png
+    - assets/statsaa.png
     - assets/story_1/
     - assets/tables/
     - assets/images/First_page.gif
@@ -153,6 +156,7 @@ flutter:
     - assets/images/learning.png
     - assets/animation/Animation1.json
     - assets/animation/Animation2.json
+    - assets/animation/Animation3.json
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

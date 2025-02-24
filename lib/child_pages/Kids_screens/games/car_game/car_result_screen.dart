@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'car_game.dart';
 
 class CarResultScreen extends StatefulWidget {
   final int score;
-  final String level; // Added level parameter
+  final String level; // Game Level
 
   const CarResultScreen({super.key, required this.score, required this.level});
 
@@ -27,16 +26,16 @@ class _CarResultScreenState extends State<CarResultScreen> {
     try {
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       final firestore = FirebaseFirestore.instance;
-      // Use level-specific document ID.
-      final String gameDocId = "car_game_${widget.level.toLowerCase()}";
 
+      // Firestore path: /users/{userId}/games/catch the ball/{level}/score
       final gameDoc = firestore
           .collection('users')
           .doc(userId)
-          .collection('kids_data')
-          .doc('games')
-          .collection('game_scores')
-          .doc(gameDocId);
+          .collection('games')
+          .doc('catch the ball')
+          .collection(
+              widget.level.toLowerCase()) // Subcollection for each level
+          .doc('score');
 
       final gameData = await gameDoc.get();
       if (gameData.exists) {
@@ -53,20 +52,22 @@ class _CarResultScreenState extends State<CarResultScreen> {
     try {
       String? userId = FirebaseAuth.instance.currentUser?.uid;
       final firestore = FirebaseFirestore.instance;
-      // Use level-specific document ID.
-      final String gameDocId = "car_game_${widget.level.toLowerCase()}";
 
+      // Firestore path: /users/{userId}/games/catch the ball/{level}/score
       final gameDoc = firestore
           .collection('users')
           .doc(userId)
-          .collection('kids_data')
-          .doc('games')
-          .collection('game_scores')
-          .doc(gameDocId);
+          .collection('games')
+          .doc('catch the ball')
+          .collection(
+              widget.level.toLowerCase()) // Subcollection for each level
+          .doc('score');
 
       final gameData = await gameDoc.get();
+      List<int> lastScores = [];
+
       if (gameData.exists) {
-        List<int> lastScores = List<int>.from(gameData['lastScores'] ?? []);
+        lastScores = List<int>.from(gameData['lastScores'] ?? []);
         int currentHighestScore = gameData['highestScore'] ?? 0;
 
         if (score > currentHighestScore) {
@@ -76,10 +77,10 @@ class _CarResultScreenState extends State<CarResultScreen> {
 
         lastScores.add(score);
         if (lastScores.length > 5) {
-          lastScores = lastScores.sublist(lastScores.length - 5);
+          lastScores.removeAt(0);
         }
 
-        await gameDoc.update({
+        await gameDoc.set({
           'highestScore': currentHighestScore,
           'lastScores': lastScores,
           'lastPlayed': FieldValue.serverTimestamp(),
@@ -103,6 +104,7 @@ class _CarResultScreenState extends State<CarResultScreen> {
           'lastScores': [score],
           'lastPlayed': FieldValue.serverTimestamp(),
         });
+
         setState(() {
           highestScore = score;
         });
@@ -179,14 +181,7 @@ class _CarResultScreenState extends State<CarResultScreen> {
                         ElevatedButton(
                           onPressed: () {
                             saveGameData(widget.score);
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => KidCarGame(
-                                        level: widget.level,
-                                        carImage: 'assets/games/green car.png',
-                                      )),
-                            );
+                            Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,

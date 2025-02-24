@@ -4,10 +4,18 @@ import 'package:flutter/material.dart';
 import 'Authentication/splash_screen.dart';
 import 'firebase_options.dart';
 import 'package:final_year_project/Authentication/login_screen.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Activate Firebase App Check with debug provider.
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug, // For iOS, if applicable.
+  );
+
   runApp(MyApp());
 }
 
@@ -23,11 +31,13 @@ class MyApp extends StatelessWidget {
       },
       onUnknownRoute: (settings) {
         return MaterialPageRoute(
-            builder: (context) =>
-                NotFoundPage()); // Handle unknown routes if needed
+          builder: (context) => NotFoundPage(),
+        );
       },
       debugShowCheckedModeBanner: false, // Disable the debug banner
       home: SplashScreen(),
     );
   }
 }
+
+// Debug Device = ab2997ec-981f-435e-a87a-8d9d99086f7a

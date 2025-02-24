@@ -10,8 +10,9 @@ import 'games/games_page.dart';
 
 class KidsHome extends StatefulWidget {
   final String uid;
+  final String parentEmail;
 
-  const KidsHome({super.key, required this.uid});
+  const KidsHome({super.key, required this.uid, required this.parentEmail});
 
   @override
   State<KidsHome> createState() => _KidsHomeState();
@@ -22,16 +23,26 @@ class _KidsHomeState extends State<KidsHome> {
 
   Future<Map<String, dynamic>?> fetchKidData() async {
     try {
-      print(widget.uid);
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+      // Fetch the parent's document using the parent's email.
+      DocumentSnapshot parentSnapshot = await FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.uid)
+          .doc(widget.parentEmail)
           .get();
-      print(snapshot.data());
-      if (snapshot.exists) {
-        return snapshot.data() as Map<String, dynamic>?;
+
+      if (parentSnapshot.exists) {
+        Map<String, dynamic> parentData =
+            parentSnapshot.data() as Map<String, dynamic>;
+        List children = parentData['children'] ?? [];
+
+        // Search for the child in the "children" array.
+        for (var child in children) {
+          if (child['childId'] == widget.uid) {
+            return child as Map<String, dynamic>;
+          }
+        }
+        return null; // Child not found.
       } else {
-        return null;
+        return null; // Parent document doesn't exist.
       }
     } catch (e) {
       debugPrint("Error fetching kid data: $e");

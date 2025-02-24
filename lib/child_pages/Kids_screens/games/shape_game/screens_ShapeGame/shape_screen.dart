@@ -207,7 +207,7 @@ class _ShapeScreenState extends State<ShapeScreen> {
                                 horizontal: 20.0, vertical: 12.0), // Padding
                             elevation: 5, // Shadow for a raised look
                             minimumSize: const Size(
-                                120, 50), // Smaller button size with same width
+                                75, 50), // Smaller button size with same width
                           ),
                           onPressed: isAnswerSelected
                               ? null // Disable buttons after selection

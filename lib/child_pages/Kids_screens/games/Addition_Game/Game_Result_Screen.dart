@@ -33,7 +33,6 @@ class QuizResultScreen extends StatefulWidget {
 class _QuizResultScreenState extends State<QuizResultScreen> {
   late ConfettiController _confettiController;
   double progress = 0.0;
-  bool _hasSaved = false;
 
   @override
   void initState() {
@@ -63,21 +62,30 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
 
   // Save result data to Firestore based on game level.
   Future<void> saveResultData() async {
-    if (_hasSaved) return; // Prevent duplicate saves
-
     try {
-      String? userId = FirebaseAuth.instance.currentUser?.uid;
+      // Get the child's UID.
+      String? childId = FirebaseAuth.instance.currentUser?.uid;
+      if (childId == null) {
+        print("No child id found");
+        return;
+      }
+
       String gameName = "additionGame";
-      // Document ID uses game name and level (converted to lowercase)
-      String docId = "$gameName${widget.level.toLowerCase()}";
+      String levelSubCollection = widget.level.toLowerCase();
+
+      // Build the Firestore path:
+      // /users/{childId}/games/{gameName}/{levelSubCollection}/scores
       DocumentReference gameDoc = FirebaseFirestore.instance
           .collection('users')
-          .doc(userId)
-          .collection('kids_data')
-          .doc('games')
-          .collection('game_scores')
-          .doc(docId);
+          .doc(childId)
+          .collection('games')
+          .doc(gameName)
+          .collection(levelSubCollection)
+          .doc('scores');
 
+      print("Saving result data to: ${gameDoc.path}");
+
+      // Retrieve existing game data if any.
       DocumentSnapshot docSnapshot = await gameDoc.get();
       List<Map<String, dynamic>> previousScores = [];
       int highScore = 0;
@@ -93,9 +101,10 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
         highScore = widget.score;
       }
 
-      double percentage = widget.totalQuestions > 0
-          ? (widget.score / widget.totalQuestions * 100)
-          : 0.0;
+      double maxScore = widget.totalQuestions *
+          10; // assuming each question's max score is 10
+      double percentage =
+          widget.totalQuestions > 0 ? (widget.score / maxScore * 100) : 0.0;
       String percentageStr = percentage.toStringAsFixed(2);
 
       Map<String, dynamic> resultData = {
@@ -106,23 +115,22 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
         'score': widget.score,
         'percentage': percentageStr,
         'level': widget.level,
-        'timestamp': FieldValue.serverTimestamp(),
+        'timestamp': DateTime.now().toUtc().toIso8601String(),
       };
 
-      // Prepend new result.
+      // Prepend the new result data.
       previousScores.insert(0, resultData);
       if (previousScores.length > 5) {
         previousScores = previousScores.sublist(0, 5);
       }
 
+      // Save the updated scores and high score.
       await gameDoc.set({
         'scores': previousScores,
         'highScore': highScore,
       });
 
-      _hasSaved = true;
-      // Optionally, you can show a snackbar:
-      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Results saved!')));
+      print("Game data saved successfully");
     } catch (e) {
       print("Error saving game data: $e");
       ScaffoldMessenger.of(context).showSnackBar(

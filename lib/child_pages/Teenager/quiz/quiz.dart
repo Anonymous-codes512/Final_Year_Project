@@ -40,42 +40,10 @@ class _QuizScreenState extends State<QuizScreen> {
       "option1": "Yes",
       "option2": "No"
     },
-    {
-      "question":
-          "Do you find it difficult to do mental math and find yourself giving incorrect change or calculating a wildly inaccurate tip?",
-      "option1": "Yes",
-      "option2": "No"
-    },
-    {
-      "question":
-          "Do you have trouble learning athletic movements, dance steps, or anything that requires you to move your body in a certain sequence?",
-      "option1": "Yes",
-      "option2": "No"
-    },
-    {
-      "question":
-          "Do you forget phone numbers or addresses, even just a few moments after they were said to you?",
-      "option1": "Yes",
-      "option2": "No"
-    },
-    {
-      "question":
-          "Do you skip numbers or read a few of them backward when reading a long list?",
-      "option1": "Yes",
-      "option2": "No"
-    },
-    {
-      "question":
-          "Do you run out of time when completing tasks on deadline, or find that much more time has passed than you had originally thought?",
-      "option1": "Yes",
-      "option2": "No"
-    },
   ];
 
   int _currentIndex = 0;
   int _score = 0;
-
-  // Get current user ID
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _saveScoreToFirestore() async {
@@ -85,14 +53,14 @@ class _QuizScreenState extends State<QuizScreen> {
         await FirebaseFirestore.instance
             .collection('users') // Root collection for users
             .doc(user.uid) // User document ID
-            .collection('kids_data') // Collection for kids' data
-            .doc('quiz') // Specific document for quiz data
-            .collection('quiz_scores') // Collection for quiz scores
-            .doc('level ${widget.level}') // Document for specific level
+            .collection('games') // Collection for games
+            .doc('quiz') // Document for quiz game
+            .collection(widget.level.toString()) // Subcollection for level
+            .doc('score') // Score document
             .set({
           'score': _score,
           'level': widget.level,
-          'timestamp': FieldValue.serverTimestamp(), // Add timestamp
+          'timestamp': FieldValue.serverTimestamp(),
         });
 
         print("Score saved successfully to Firestore.");
@@ -119,7 +87,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _showResult() {
-    _saveScoreToFirestore(); // Save score when the quiz ends
+    _saveScoreToFirestore();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -131,7 +99,6 @@ class _QuizScreenState extends State<QuizScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header Text
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -171,7 +138,6 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
 
-                // Result Text
                 const SizedBox(height: 10),
                 Text(
                   "Your score is $_score out of ${questions.length} for Level ${widget.level}.",
@@ -197,7 +163,6 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
                 const SizedBox(height: 30),
 
-                // Action Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -221,15 +186,13 @@ class _QuizScreenState extends State<QuizScreen> {
                       ),
                       child: const Text(
                         "Restart",
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white), // Red text color
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).popUntil((route) => route
-                            .isFirst); // This will pop back to the first screen
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
@@ -243,9 +206,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       ),
                       child: const Text(
                         "Close",
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white), // Red text color
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                   ],
@@ -267,8 +228,7 @@ class _QuizScreenState extends State<QuizScreen> {
         backgroundColor: Colors.teal,
         elevation: 4,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back,
-              color: Colors.white), // Set the back arrow color to white
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -315,36 +275,12 @@ class _QuizScreenState extends State<QuizScreen> {
               const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () => _answerQuestion('Yes'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  shadowColor: Colors.black,
-                  elevation: 5,
-                ),
-                child: const Text(
-                  "Yes",
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: const Text("Yes", style: TextStyle(fontSize: 18)),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => _answerQuestion('No'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  shadowColor: Colors.black,
-                  elevation: 5,
-                ),
-                child: const Text(
-                  "No",
-                  style: TextStyle(fontSize: 18),
-                ),
+                child: const Text("No", style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

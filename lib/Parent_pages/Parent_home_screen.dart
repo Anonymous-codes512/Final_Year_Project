@@ -1,3 +1,4 @@
+import 'package:final_year_project/Parent_pages/game_stats_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:final_year_project/Authentication/login_screen.dart';
 import 'package:final_year_project/Chatbot/chat_screen.dart';
@@ -42,8 +43,8 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent Home'),
-        backgroundColor: const Color(0xFFFFDE59),
+        title: const Text('Parent Homes'),
+        backgroundColor: const Color.fromARGB(255, 248, 208, 49),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -51,86 +52,103 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        // Added to make sure the content scrolls if needed
-        child: Container(
-          color: const Color(0xFFF7F7F7), // Off-white background color
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Register Children Container (Black Shade)
-              _buildClickableContainer(
-                label: 'Register \nChildren',
-                imagePath: 'assets/children.png',
-                onTap: () => _navigateToScreen(
-                  ParentHome(
-                      userName: widget.userName,
-                      parentEmail: widget.parentEmail),
+      body: Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        color: const Color.fromARGB(255, 214, 202, 157), // Background color
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildClickableContainer(
+                      label: 'Register \nChildren',
+                      imagePath: 'assets/children.png',
+                      onTap: () => _navigateToScreen(
+                        ParentHome(
+                            userName: widget.userName,
+                            parentEmail: widget.parentEmail),
+                      ),
+                      containerColor: const Color(0xFFF7B4C6),
+                      textColor: Colors.black,
+                      width: MediaQuery.of(context).size.width,
+                      isHome: true,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildClickableContainer(
+                            label: 'Book Appointment',
+                            imagePath: 'assets/appointment.png',
+                            onTap: () => _navigateToScreen(
+                              BookAppointment(parentEmail: widget.parentEmail),
+                            ),
+                            containerColor: const Color(0xFF373E37),
+                            textColor: Colors.white,
+                            width: MediaQuery.of(context).size.width * 0.47,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildClickableContainer(
+                            label: 'Status',
+                            imagePath: 'assets/status.png',
+                            onTap: () => _navigateToScreen(
+                              AppointmentStatus(
+                                  parentEmail: widget.parentEmail),
+                            ),
+                            containerColor: const Color(0xFFFFDE59),
+                            textColor: Colors.black,
+                            width: MediaQuery.of(context).size.width * 0.47,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildClickableContainer(
+                            label: 'Education',
+                            imagePath: 'assets/education.png',
+                            onTap: () => _navigateToScreen(EducationScreen()),
+                            containerColor: const Color(0xFFFFDE59),
+                            textColor: Colors.black,
+                            width: MediaQuery.of(context).size.width * 0.47,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildClickableContainer(
+                            label: 'Group Chat',
+                            imagePath: 'assets/groupchat.png',
+                            onTap: () => _navigateToScreen(GroupChat()),
+                            containerColor: const Color(0xFF373E37),
+                            textColor: Colors.white,
+                            width: MediaQuery.of(context).size.width * 0.47,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildClickableContainer(
+                      label: 'View Game Stats',
+                      imagePath: 'assets/stats.png',
+                      onTap: () => _navigateToScreen(GameStatsScreen()),
+                      containerColor: const Color(0xFF332F46),
+                      textColor: Colors.white,
+                      width: MediaQuery.of(context).size.width,
+                      isHome: true,
+                    ),
+                  ],
                 ),
-                width: MediaQuery.of(context).size.width, // Full width
-                containerColor: const Color(0xFFF7B4C6), // Black shade color
-                textColor: Colors.black,
-                isHome: true, // Flag to indicate if it's the home container
               ),
-              const SizedBox(height: 8), // Reduced spacing between containers
-              // Row 1: Book Appointment (Yellow) and Status (Pink)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildClickableContainer(
-                    label: 'Book Appointment',
-                    imagePath: 'assets/appointment.png',
-                    onTap: () => _navigateToScreen(
-                      BookAppointment(parentEmail: widget.parentEmail),
-                    ),
-                    width:
-                        MediaQuery.of(context).size.width * 0.45, // Half width
-                    containerColor: const Color(0xFF373E37), // Yellow
-                    textColor: Colors.white,
-                  ),
-                  _buildClickableContainer(
-                    label: 'Status',
-                    imagePath: 'assets/status.png',
-                    onTap: () => _navigateToScreen(
-                      AppointmentStatus(parentEmail: widget.parentEmail),
-                    ),
-                    width:
-                        MediaQuery.of(context).size.width * 0.45, // Half width
-                    containerColor: const Color(0xFFFFDE59), // Pink
-                    textColor: Colors.black,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8), // Reduced spacing between containers
-              // Row 2: Education (Pink) and Group Chat (Black)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildClickableContainer(
-                    label: 'Education',
-                    imagePath: 'assets/education.png',
-                    onTap: () => _navigateToScreen(EducationScreen()),
-                    width:
-                        MediaQuery.of(context).size.width * 0.45, // Half width
-                    containerColor: const Color(0xFFFFDE59), // Pink
-                    textColor: Colors.black,
-                  ),
-                  _buildClickableContainer(
-                    label: 'Group Chat',
-                    imagePath: 'assets/groupchat.png',
-                    onTap: () => _navigateToScreen(GroupChat()),
-                    width:
-                        MediaQuery.of(context).size.width * 0.45, // Half width
-                    containerColor: const Color(0xFF373E37), // Black
-                    textColor: Colors.white,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8), // Reduced spacing between containers
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -161,7 +179,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       onTap: onTap,
       child: Container(
         width: width, // Set width dynamically
-        height: isHome ? 170 : 150, // Increased height of containers
+        height: isHome ? 160 : 150, // Increased height of containers
         decoration: BoxDecoration(
           color: containerColor,
           borderRadius: BorderRadius.circular(16),

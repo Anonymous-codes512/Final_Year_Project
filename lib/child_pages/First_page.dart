@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'Kids_screens/Kids_Home.dart';
-import 'Teenager/new_main.dart';
+import 'Teenager/teenager_level_screen.dart';
 
 class ChildHomePage extends StatefulWidget {
   final String userName;
-  final String
-      userId; // Pass the user ID to fetch child details from Firestore.
+  final String userId;
+  final String parentEmail;
 
   const ChildHomePage(
-      {required this.userName, required this.userId, super.key});
+      {required this.userName,
+      required this.userId,
+      required this.parentEmail,
+      super.key});
 
   @override
   _ChildHomePageState createState() => _ChildHomePageState();
@@ -32,20 +35,34 @@ class _ChildHomePageState extends State<ChildHomePage> {
   /// Function to fetch the child's age from Firestore and navigate accordingly.
   Future<void> _checkChildAge() async {
     try {
-      // Reference to the Firestore document
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users') // Replace 'users' with your Firestore collection
-          .doc(widget.userId) // The document ID is the user's ID.
+      // Fetch the parent's document using the parent's email.
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.parentEmail) // parent's email is used as the document ID
           .get();
 
-      // Extract age from the Firestore document
-      if (userDoc.exists) {
-        Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
-        // Ensure the 'age' field exists in Firestore and is not null
-        int age = int.tryParse(data['age'].toString()) ??
-            0; // Default to 0 if 'age' is null
+      if (parentDoc.exists) {
+        Map<String, dynamic> parentData =
+            parentDoc.data() as Map<String, dynamic>;
+        List<dynamic> children = parentData['children'] ?? [];
 
-        // Navigate based on the age
+        // Find the child's record by matching the child's ID.
+        Map<String, dynamic>? childData;
+        for (var child in children) {
+          if (child['childId'] == widget.userId) {
+            childData = child;
+            break;
+          }
+        }
+        if (childData == null) {
+          print('Child record not found in the parent document');
+          return;
+        }
+
+        // Parse the child's age.
+        int age = int.tryParse(childData['age'].toString()) ?? 0;
+
+        // Navigate based on the child's age.
         if (age >= 12) {
           Navigator.pushReplacement(
             context,
@@ -54,16 +71,16 @@ class _ChildHomePageState extends State<ChildHomePage> {
             ),
           );
         } else {
-          final String uid = widget.userId;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => KidsHome(uid: uid),
+              builder: (context) =>
+                  KidsHome(uid: widget.userId, parentEmail: widget.parentEmail),
             ),
           );
         }
       } else {
-        print('User document does not exist');
+        print('Parent document does not exist');
       }
     } catch (e) {
       print('Error fetching age: $e');

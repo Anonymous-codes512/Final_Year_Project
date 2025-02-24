@@ -5,7 +5,7 @@ import 'package:final_year_project/child_pages/first_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../Auth_Service/Auth_service_Screen.dart';
-import '../Parent_pages/Parent_home_screen.dart';
+import '../Parent_pages/parent_home_screen.dart';
 import 'forget_password_page.dart';
 import '../psychiatrist_pages/psychiatrist_Home_Page.dart';
 import 'Registration_Screen.dart';
@@ -47,6 +47,47 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
+      // If role is child, search in parent's documents for the child record.
+      if (_selectedRole!.toLowerCase() == 'child') {
+        QuerySnapshot parentSnapshots =
+            await FirebaseFirestore.instance.collection('users').get();
+        Map<String, dynamic>? childData;
+        String? parentEmailForChild;
+        for (var doc in parentSnapshots.docs) {
+          String currentParentEmail = doc.id;
+          Map<String, dynamic> parentData = doc.data() as Map<String, dynamic>;
+          List<dynamic> children = parentData['children'] ?? [];
+          for (var child in children) {
+            if (child['childId'] == user.uid) {
+              childData = child;
+              parentEmailForChild = currentParentEmail;
+              print('Parent Email : $parentEmailForChild');
+              break;
+            }
+          }
+          if (childData != null) break;
+        }
+        if (childData == null) {
+          setState(() {
+            _errorMessage = 'Child data not found in parent documents.';
+          });
+          return;
+        }
+        String childName = childData['name'] ?? '';
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChildHomePage(
+              userName: childName,
+              userId: user.uid,
+              parentEmail: parentEmailForChild ?? '',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // For Parent and Psychiatrist, fetch user document from "users" collection.
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -72,8 +113,6 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      // Convert age
-
       String role = userData['role'] as String;
       String username = userData['username'] ?? userData['name'] ?? '';
 
@@ -92,18 +131,6 @@ class _LoginPageState extends State<LoginPage> {
               builder: (context) => ParentHomeScreen(
                 userName: username,
                 parentEmail: email,
-              ),
-            ),
-          );
-          break;
-        case 'child':
-          final String uid = user.uid;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ChildHomePage(
-                userName: username,
-                userId: uid,
               ),
             ),
           );
@@ -182,7 +209,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 child: Column(
                   children: [
-                    // Wrap the Row with SingleChildScrollView to avoid overflow
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
