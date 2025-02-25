@@ -6,8 +6,15 @@ import 'dart:async';
 class GameScreen extends StatefulWidget {
   final String level;
   final Color themeColor;
+  final String userId;
+  final String parentEmail;
 
-  const GameScreen({super.key, required this.level, required this.themeColor});
+  const GameScreen(
+      {super.key,
+      required this.level,
+      required this.themeColor,
+      required this.userId,
+      required this.parentEmail});
 
   @override
   _GameScreenState createState() => _GameScreenState();
@@ -55,6 +62,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _setTimeBasedOnLevel() {
+    print('${widget.userId} and ${widget.parentEmail}');
     switch (widget.level) {
       case 'Easy':
         _timeLeft = 180;
@@ -99,6 +107,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         totalWrongAttempts: _totalWrongAttempts,
         score: _score,
         level: widget.level,
+        userId: widget.userId,
+        parentEmail: widget.parentEmail,
         themeColor: widget.themeColor,
       ),
     );

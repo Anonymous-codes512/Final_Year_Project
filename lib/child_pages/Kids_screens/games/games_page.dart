@@ -5,7 +5,11 @@ import 'car_game/car_level_selection_Screen.dart';
 import 'package:final_year_project/child_pages/Kids_screens/games/shape_game/screens_ShapeGame/shape_splash_screen.dart';
 
 class NumbersPage extends StatefulWidget {
-  const NumbersPage({super.key});
+  final String userId;
+  final String parentEmail;
+
+  const NumbersPage(
+      {required this.userId, required this.parentEmail, super.key});
 
   @override
   _NumbersPageState createState() => _NumbersPageState();
@@ -94,24 +98,30 @@ class _NumbersPageState extends State<NumbersPage>
                   buildGameButton(context, 'Addition Game', Icons.add_circle,
                       () {
                     Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => KidsLevelScreen()),
-                    );
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => KidsLevelScreen(
+                                userId: widget.userId,
+                                parentEmail: widget.parentEmail)));
                   }),
                   buildGameButton(context, 'Shapes Game', Icons.category, () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => ShapeSplashScreen()),
+                          builder: (context) => ShapeSplashScreen(
+                              userId: widget.userId ?? '',
+                              parentEmail: widget.parentEmail ?? '')),
                     );
                   }),
                   buildGameButton(
                       context, 'Catch the Ball!', Icons.sports_soccer, () {
+                    print({widget.parentEmail});
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CarLevelSelectionScreen()),
+                          builder: (context) => CarLevelSelectionScreen(
+                              userId: widget.userId ?? '',
+                              parentEmail: widget.parentEmail ?? '')),
                     );
                   }),
                   // buildGameButton(context, 'New Game', Icons.add_circle, () {

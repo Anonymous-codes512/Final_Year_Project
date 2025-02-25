@@ -1,10 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class QuizScreen extends StatefulWidget {
   final int level;
-  const QuizScreen({super.key, required this.level});
+  final String uid;
+  final String parentEmail;
+  const QuizScreen(
+      {super.key,
+      required this.level,
+      required this.uid,
+      required this.parentEmail});
 
   @override
   _QuizScreenState createState() => _QuizScreenState();
@@ -44,29 +51,110 @@ class _QuizScreenState extends State<QuizScreen> {
 
   int _currentIndex = 0;
   int _score = 0;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _saveScoreToFirestore() async {
-    final User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users') // Root collection for users
-            .doc(user.uid) // User document ID
-            .collection('games') // Collection for games
-            .doc('quiz') // Document for quiz game
-            .collection(widget.level.toString()) // Subcollection for level
-            .doc('score') // Score document
-            .set({
-          'score': _score,
-          'level': widget.level,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
+    try {
+      String parentEmail =
+          widget.parentEmail.toLowerCase().trim(); // Parent document ID
+      String childId = widget.uid; // Child ID inside children array
+      String gameName = "quiz"; // Game name
+      String levelKey = "level_${widget.level}"; // Store level dynamically
 
-        print("Score saved successfully to Firestore.");
-      } catch (e) {
-        print("Error saving score to Firestore: $e");
+      print("🔍 Fetching parent document for: $parentEmail");
+
+      // Fetch parent document
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .get();
+
+      if (!parentDoc.exists) {
+        print("🚨 Parent document not found: $parentEmail");
+        return;
       }
+
+      Map<String, dynamic> parentData =
+          parentDoc.data() as Map<String, dynamic>;
+
+      print("✅ Parent document found! Data: $parentData");
+
+      List<dynamic> children = parentData["children"] ?? [];
+
+      if (children.isEmpty) {
+        print("🚨 No children found under parent: $parentEmail");
+        return;
+      }
+
+      bool childFound = false;
+
+      print("📌 Searching for childId: $childId in children list...");
+
+      // Loop through children to find the correct childId
+      for (var i = 0; i < children.length; i++) {
+        print("🧐 Checking child: ${children[i]["childId"]}");
+
+        if (children[i]["childId"] == childId) {
+          childFound = true;
+          print("✅ Child ID matched: $childId");
+
+          // Ensure gameData exists
+          if (children[i]["gameData"] == null) {
+            print("🛠 Creating gameData field...");
+            children[i]["gameData"] = {};
+          }
+
+          // Ensure quiz data exists inside gameData
+          if (children[i]["gameData"][gameName] == null) {
+            print("🛠 Creating quiz field...");
+            children[i]["gameData"][gameName] = {};
+          }
+
+          // Ensure level data exists inside quiz
+          if (children[i]["gameData"][gameName][levelKey] == null) {
+            print("🛠 Creating level field...");
+            children[i]["gameData"][gameName][levelKey] = [];
+          }
+
+          // Format the date as "DD-MM-YYYY"
+          String formattedDate =
+              DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+          // Create a new score entry with formatted date
+          Map<String, dynamic> scoreEntry = {
+            "score": _score,
+            "date": formattedDate, // Store only DD-MM-YYYY
+          };
+
+          print("📌 Score Entry: $scoreEntry");
+
+          // Append new score with date
+          children[i]["gameData"][gameName][levelKey].add(scoreEntry);
+
+          print(
+              "✅ Score $_score added to $levelKey with date $formattedDate for child $childId");
+
+          break;
+        }
+      }
+
+      if (!childFound) {
+        print("🚨 Child ID $childId NOT found under parent $parentEmail.");
+        return;
+      }
+
+      // Update Firestore with modified children list
+      print("📤 Saving updated children data...");
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .update({
+        "children": children,
+      });
+
+      print(
+          "✅ Score saved successfully for child $childId in game $gameName (Level: $levelKey).");
+    } catch (e) {
+      print("⚠️ Error saving score to Firestore: $e");
     }
   }
 

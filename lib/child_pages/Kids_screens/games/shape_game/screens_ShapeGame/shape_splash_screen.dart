@@ -2,7 +2,10 @@ import 'package:final_year_project/child_pages/Kids_screens/games/shape_game/scr
 import 'package:flutter/material.dart';
 
 class ShapeSplashScreen extends StatefulWidget {
-  const ShapeSplashScreen({super.key});
+  final String userId;
+  final String parentEmail;
+  const ShapeSplashScreen(
+      {required this.userId, required this.parentEmail, super.key});
 
   @override
   _ShapeSplashScreenState createState() => _ShapeSplashScreenState();
@@ -62,9 +65,14 @@ class _ShapeSplashScreenState extends State<ShapeSplashScreen> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
+                      print('Parent Mail : ${widget.parentEmail}');
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ShapeScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => ShapeScreen(
+                                  userId: widget.userId,
+                                  parentEmail: widget.parentEmail,
+                                )),
                       );
                     },
                     style: ElevatedButton.styleFrom(

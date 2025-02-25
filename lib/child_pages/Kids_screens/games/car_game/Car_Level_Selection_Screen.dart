@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 class CarLevelSelectionScreen extends StatefulWidget {
-  const CarLevelSelectionScreen({super.key});
+  final String userId;
+  final String parentEmail;
+  const CarLevelSelectionScreen(
+      {required this.userId, required this.parentEmail, super.key});
 
   @override
   _CarLevelSelectionScreenState createState() =>
@@ -51,6 +54,8 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                     KidCarGame(
                       level: 'Easy',
                       carImage: 'assets/games/green car.png',
+                      userId: widget.userId,
+                      parentEmail: widget.parentEmail,
                     ),
                   ),
                   const SizedBox(
@@ -65,6 +70,8 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                     KidCarGame(
                       level: 'Medium',
                       carImage: 'assets/games/orange car.png',
+                      userId: widget.userId,
+                      parentEmail: widget.parentEmail,
                     ),
                   ),
                   const SizedBox(
@@ -79,6 +86,8 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                     KidCarGame(
                       level: 'Hard',
                       carImage: 'assets/games/red car.png',
+                      userId: widget.userId,
+                      parentEmail: widget.parentEmail,
                     ),
                   ),
 
@@ -112,6 +121,7 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
   ) {
     return GestureDetector(
       onTap: () {
+        print('Parent Mail : ${widget.parentEmail}');
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => page),

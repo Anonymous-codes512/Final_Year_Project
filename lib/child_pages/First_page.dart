@@ -67,7 +67,8 @@ class _ChildHomePageState extends State<ChildHomePage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const LevelScreen(),
+              builder: (context) => LevelScreen(
+                  uid: widget.userId, parentEmail: widget.parentEmail),
             ),
           );
         } else {

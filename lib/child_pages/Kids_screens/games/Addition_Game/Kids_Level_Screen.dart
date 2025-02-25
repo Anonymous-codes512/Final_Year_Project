@@ -3,7 +3,11 @@ import 'game_screen.dart';
 import 'package:lottie/lottie.dart';
 
 class KidsLevelScreen extends StatefulWidget {
-  const KidsLevelScreen({super.key});
+  final String userId;
+  final String parentEmail;
+
+  const KidsLevelScreen(
+      {required this.userId, required this.parentEmail, super.key});
 
   @override
   _KidsLevelScreenState createState() => _KidsLevelScreenState();
@@ -45,6 +49,8 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                     GameScreen(
                       level: 'Easy',
                       themeColor: Colors.green.shade400,
+                      userId: widget.userId,
+                      parentEmail: widget.parentEmail,
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -55,7 +61,11 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                     'Challenge yourself a bit more!',
                     Colors.blue.shade400,
                     GameScreen(
-                        level: 'Medium', themeColor: Colors.blue.shade400),
+                      level: 'Medium',
+                      themeColor: Colors.blue.shade400,
+                      userId: widget.userId,
+                      parentEmail: widget.parentEmail,
+                    ),
                   ),
                   const SizedBox(height: 15),
                   _buildLevelCard(
@@ -67,6 +77,8 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                     GameScreen(
                       level: 'Hard',
                       themeColor: Colors.orange.shade400,
+                      userId: widget.userId,
+                      parentEmail: widget.parentEmail,
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -79,6 +91,8 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                     GameScreen(
                       level: 'Advanced',
                       themeColor: Colors.red.shade400,
+                      userId: widget.userId,
+                      parentEmail: widget.parentEmail,
                     ),
                   ),
                 ],
@@ -104,6 +118,7 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
           context,
           MaterialPageRoute(builder: (context) => page),
         );
+        print('${widget.userId}, ${widget.parentEmail}');
       },
       child: Container(
         decoration: BoxDecoration(

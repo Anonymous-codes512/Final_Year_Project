@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:final_year_project/child_pages/Kids_screens/games/Addition_Game/game_screen.dart';
-import 'package:final_year_project/child_pages/Kids_screens/games/Addition_Game/kids_level_screen.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:final_year_project/child_pages/Kids_screens/games/Addition_Game/game_screen.dart';
+import 'package:final_year_project/child_pages/Kids_screens/games/Addition_Game/kids_level_screen.dart';
 
 class QuizResultScreen extends StatefulWidget {
   final int totalQuestions;
@@ -13,6 +13,8 @@ class QuizResultScreen extends StatefulWidget {
   final int totalWrongAttempts;
   final int score;
   final String level; // "easy", "medium", "hard", "advance"
+  final String userId;
+  final String parentEmail;
   final Color themeColor;
 
   const QuizResultScreen({
@@ -23,6 +25,8 @@ class QuizResultScreen extends StatefulWidget {
     required this.totalWrongAttempts,
     required this.score,
     required this.level,
+    required this.userId,
+    required this.parentEmail,
     required this.themeColor,
   });
 
@@ -40,8 +44,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 2));
 
-    // Start progress animation. Completion is calculated as the percentage
-    // of questions answered (first try or with mistakes)
+    // Start progress animation
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
         progress = (widget.firstTryCorrect + widget.questionsWithMistakes) /
@@ -60,79 +63,105 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     super.dispose();
   }
 
-  // Save result data to Firestore based on game level.
+  /// **🔥 Save result data to Firestore based on Firestore Structure**
   Future<void> saveResultData() async {
     try {
-      // Get the child's UID.
-      String? childId = FirebaseAuth.instance.currentUser?.uid;
-      if (childId == null) {
-        print("No child id found");
+      String parentEmail =
+          widget.parentEmail.toLowerCase().trim(); // Parent document ID
+      String childId = widget.userId; // Child ID inside children array
+      String gameName = "additionGame"; // Game name
+      String levelKey = "level_${widget.level}"; // Store level dynamically
+
+      print("🔍 Fetching parent document for: $parentEmail");
+
+      // Fetch parent document
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .get();
+
+      if (!parentDoc.exists) {
+        print("🚨 Parent document not found: $parentEmail");
         return;
       }
 
-      String gameName = "additionGame";
-      String levelSubCollection = widget.level.toLowerCase();
+      Map<String, dynamic> parentData =
+          parentDoc.data() as Map<String, dynamic>;
 
-      // Build the Firestore path:
-      // /users/{childId}/games/{gameName}/{levelSubCollection}/scores
-      DocumentReference gameDoc = FirebaseFirestore.instance
+      print("✅ Parent document found! Data: $parentData");
+
+      List<dynamic> children = parentData["children"] ?? [];
+
+      if (children.isEmpty) {
+        print("🚨 No children found under parent: $parentEmail");
+        return;
+      }
+
+      bool childFound = false;
+
+      print("📌 Searching for childId: $childId in children list...");
+
+      // Loop through children to find the correct childId
+      for (var i = 0; i < children.length; i++) {
+        print("🧐 Checking child: ${children[i]["childId"]}");
+
+        if (children[i]["childId"] == childId) {
+          childFound = true;
+          print("✅ Child ID matched: $childId");
+
+          // Ensure gameData exists
+          if (children[i]["gameData"] == null) {
+            print("🛠 Creating gameData field...");
+            children[i]["gameData"] = {};
+          }
+
+          // Ensure additionGame data exists inside gameData
+          if (children[i]["gameData"][gameName] == null) {
+            print("🛠 Creating additionGame field...");
+            children[i]["gameData"][gameName] = {};
+          }
+
+          // Ensure level data exists inside additionGame
+          if (children[i]["gameData"][gameName][levelKey] == null) {
+            print("🛠 Creating level field...");
+            children[i]["gameData"][gameName][levelKey] = [];
+          }
+
+          String formattedDate =
+              DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+          Map<String, dynamic> scoreEntry = {
+            "score": widget.score,
+            "timestamp": formattedDate,
+          };
+
+          // Append new score with timestamp
+          children[i]["gameData"][gameName][levelKey].add(scoreEntry);
+          print(
+              "✅ Score ${widget.score} added to $levelKey for child $childId");
+
+          break;
+        }
+      }
+
+      if (!childFound) {
+        print("🚨 Child ID $childId NOT found under parent $parentEmail.");
+        return;
+      }
+
+      // Update Firestore with modified children list
+      print("📤 Saving updated children data...");
+      await FirebaseFirestore.instance
           .collection('users')
-          .doc(childId)
-          .collection('games')
-          .doc(gameName)
-          .collection(levelSubCollection)
-          .doc('scores');
-
-      print("Saving result data to: ${gameDoc.path}");
-
-      // Retrieve existing game data if any.
-      DocumentSnapshot docSnapshot = await gameDoc.get();
-      List<Map<String, dynamic>> previousScores = [];
-      int highScore = 0;
-
-      if (docSnapshot.exists) {
-        Map<String, dynamic> data = docSnapshot.data() as Map<String, dynamic>;
-        previousScores = List<Map<String, dynamic>>.from(data['scores'] ?? []);
-        highScore = data['highScore'] ?? 0;
-      }
-
-      // Update high score if current score is higher.
-      if (widget.score > highScore) {
-        highScore = widget.score;
-      }
-
-      double maxScore = widget.totalQuestions *
-          10; // assuming each question's max score is 10
-      double percentage =
-          widget.totalQuestions > 0 ? (widget.score / maxScore * 100) : 0.0;
-      String percentageStr = percentage.toStringAsFixed(2);
-
-      Map<String, dynamic> resultData = {
-        'firstTryCorrect': widget.firstTryCorrect,
-        'questionsWithMistakes': widget.questionsWithMistakes,
-        'totalWrongAttempts': widget.totalWrongAttempts,
-        'totalQuestions': widget.totalQuestions,
-        'score': widget.score,
-        'percentage': percentageStr,
-        'level': widget.level,
-        'timestamp': DateTime.now().toUtc().toIso8601String(),
-      };
-
-      // Prepend the new result data.
-      previousScores.insert(0, resultData);
-      if (previousScores.length > 5) {
-        previousScores = previousScores.sublist(0, 5);
-      }
-
-      // Save the updated scores and high score.
-      await gameDoc.set({
-        'scores': previousScores,
-        'highScore': highScore,
+          .doc(parentEmail)
+          .update({
+        "children": children,
       });
 
-      print("Game data saved successfully");
+      print(
+          "✅ Score saved successfully for child $childId in game $gameName (Level: $levelKey).");
     } catch (e) {
-      print("Error saving game data: $e");
+      print("⚠️ Error saving game data: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving game data: $e')),
       );
@@ -209,17 +238,9 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                     decoration: BoxDecoration(
                       color: Colors.deepPurple[300],
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 8,
-                            spreadRadius: 1)
-                      ],
                     ),
                     child: Column(
                       children: [
-                        _summaryRow("Completion",
-                            "${(progress * 100).toInt()}%", Colors.yellow),
                         _summaryRow("Total Questions",
                             "${widget.totalQuestions}", Colors.white),
                         _summaryRow("First Try Correct",
@@ -242,7 +263,10 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const KidsLevelScreen()),
+                              builder: (context) => KidsLevelScreen(
+                                    userId: widget.userId,
+                                    parentEmail: widget.parentEmail,
+                                  )),
                           (route) => false,
                         );
                       }),
@@ -256,6 +280,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                             builder: (context) => GameScreen(
                               level: widget.level,
                               themeColor: widget.themeColor,
+                              userId: widget.userId,
+                              parentEmail: widget.parentEmail,
                             ),
                           ),
                         );
@@ -271,32 +297,18 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     );
   }
 
-  // Summary row with colorful indicators.
   Widget _summaryRow(String title, String value, Color dotColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.circle, color: dotColor, size: 10),
-              const SizedBox(width: 8),
-              Text(title,
-                  style: const TextStyle(color: Colors.white, fontSize: 18)),
-            ],
-          ),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold)),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 18, color: Colors.white)),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))
+      ],
     );
   }
 
-  // Fun button style for kids.
   Widget _actionButton(
       IconData icon, String label, Color color, VoidCallback onTap) {
     return Column(

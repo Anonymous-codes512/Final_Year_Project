@@ -6,8 +6,15 @@ import 'package:flutter/material.dart';
 class KidCarGame extends StatefulWidget {
   final String level; // "easy", "medium", "hard"
   final String carImage; // asset path for the car image
+  final String userId; // asset path for the car image
+  final String parentEmail; // asset path for the car image
 
-  const KidCarGame({super.key, required this.level, required this.carImage});
+  const KidCarGame(
+      {super.key,
+      required this.level,
+      required this.carImage,
+      required this.userId,
+      required this.parentEmail});
 
   @override
   _KidCarGameState createState() => _KidCarGameState();
@@ -153,6 +160,8 @@ class _KidCarGameState extends State<KidCarGame> {
         builder: (context) => CarResultScreen(
           score: score.toInt(),
           level: widget.level,
+          userId: widget.userId,
+          parentEmail: widget.parentEmail,
         ),
       ),
     );

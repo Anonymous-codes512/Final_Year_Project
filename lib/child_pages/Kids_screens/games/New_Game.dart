@@ -33,8 +33,8 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward().then((_) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => NumbersPage()));
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => NumbersPage(userId: '', parentEmail: '')));
     });
   }
 

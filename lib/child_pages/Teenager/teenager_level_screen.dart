@@ -5,7 +5,10 @@ import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level_3.dart';
 import 'package:flutter/material.dart';
 
 class LevelScreen extends StatelessWidget {
-  const LevelScreen({super.key});
+  final String uid;
+  final String parentEmail;
+
+  const LevelScreen({super.key, required this.uid, required this.parentEmail});
   void _logout(BuildContext context) {
     Navigator.pushReplacement(
       context,
@@ -71,7 +74,11 @@ class LevelScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const QuizScreen(level: 1),
+                          builder: (context) => QuizScreen(
+                            level: 1,
+                            uid: uid,
+                            parentEmail: parentEmail,
+                          ),
                         ),
                       );
                     },
@@ -90,7 +97,11 @@ class LevelScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const QuizScreen2(level: 2),
+                          builder: (context) => QuizScreen2(
+                            level: 2,
+                            uid: uid,
+                            parentEmail: parentEmail,
+                          ),
                         ),
                       );
                     },
@@ -109,7 +120,11 @@ class LevelScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MultiplicationQuizPage(),
+                          builder: (context) => MultiplicationQuizPage(
+                            level: 3,
+                            uid: uid,
+                            parentEmail: parentEmail,
+                          ),
                         ),
                       );
                     },

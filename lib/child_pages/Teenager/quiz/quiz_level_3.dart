@@ -1,7 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class MultiplicationQuizPage extends StatefulWidget {
-  const MultiplicationQuizPage({super.key});
+  final int level;
+  final String uid;
+  final String parentEmail;
+  const MultiplicationQuizPage(
+      {super.key,
+      required this.level,
+      required this.uid,
+      required this.parentEmail});
 
   @override
   _MultiplicationQuizPageState createState() => _MultiplicationQuizPageState();
@@ -88,7 +97,88 @@ class _MultiplicationQuizPageState extends State<MultiplicationQuizPage> {
     });
   }
 
+  Future<void> _saveScoreToFirestore() async {
+    try {
+      String parentEmail =
+          widget.parentEmail.toLowerCase().trim(); // Parent document ID
+      String childId = widget.uid; // Child ID inside children array
+      String gameName = "quiz"; // Game name
+      String levelKey = "level_${widget.level}"; // Store level dynamically
+
+      // Fetch parent document
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .get();
+
+      if (!parentDoc.exists) {
+        print("🚨 Parent document not found: $parentEmail");
+        return;
+      }
+
+      Map<String, dynamic> parentData =
+          parentDoc.data() as Map<String, dynamic>;
+
+      List<dynamic> children = parentData["children"] ?? [];
+
+      bool childFound = false;
+
+      // Loop through children to find the correct childId
+      for (var i = 0; i < children.length; i++) {
+        if (children[i]["childId"] == childId) {
+          childFound = true;
+
+          // Ensure gameData exists
+          if (children[i]["gameData"] == null) {
+            children[i]["gameData"] = {};
+          }
+
+          // Ensure multiplication data exists inside gameData
+          if (children[i]["gameData"][gameName] == null) {
+            children[i]["gameData"][gameName] = {};
+          }
+
+          // Ensure level data exists inside multiplication
+          if (children[i]["gameData"][gameName][levelKey] == null) {
+            children[i]["gameData"][gameName][levelKey] = [];
+          }
+
+          String formattedDate =
+              DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+          Map<String, dynamic> scoreEntry = {
+            "score": _correctAnswers,
+            "date": formattedDate,
+          };
+
+          children[i]["gameData"][gameName][levelKey].add(scoreEntry);
+          break;
+        }
+      }
+
+      if (!childFound) {
+        print("🚨 Child ID $childId not found under parent $parentEmail.");
+        return;
+      }
+
+      // Update Firestore with modified children list
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .update({
+        "children": children,
+      });
+
+      print(
+          "✅ Score saved successfully for child $childId in game $gameName (Level: $levelKey).");
+    } catch (e) {
+      print("⚠️ Error saving score to Firestore: $e");
+    }
+  }
+
   void _showResult() {
+    _saveScoreToFirestore();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {

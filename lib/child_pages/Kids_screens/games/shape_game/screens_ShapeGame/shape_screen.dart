@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class ShapeScreen extends StatefulWidget {
-  const ShapeScreen({super.key});
+  final String userId;
+  final String parentEmail;
+  const ShapeScreen(
+      {required this.userId, required this.parentEmail, super.key});
 
   @override
   _ShapeScreenState createState() => _ShapeScreenState();
@@ -64,35 +68,116 @@ class _ShapeScreenState extends State<ShapeScreen> {
   }
 
   Future<void> _saveScoreToFirebase(int score) async {
-    if (userId != null) {
-      // Reference to the specific document within the 'game_scores' collection
-      DocumentReference gameScoreRef = FirebaseFirestore.instance
+    try {
+      String parentEmail =
+          widget.parentEmail.toLowerCase().trim(); // Parent document ID
+      String childId = widget.userId; // Child ID inside children array
+      String gameName = "shape_game"; // Game name
+      String levelKey = "level_Easy"; // Store level dynamically
+
+      print("🔍 Fetching parent document for: $parentEmail");
+
+      // Fetch parent document
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(userId)
-          .collection('kids_data') // 'kids_data' collection
-          .doc('games') // 'games' document
-          .collection('game_scores') // 'game_scores' collection
-          .doc('shape_game'); // 'shape_game' document
+          .doc(parentEmail)
+          .get();
 
-      DocumentSnapshot snapshot = await gameScoreRef
-          .get(); // Get the snapshot of the 'shape_game' document
-
-      if (snapshot.exists) {
-        // If document exists, update the highest score if the new score is greater
-        int highestScore = snapshot['highestScore'] ?? 0;
-        if (score > highestScore) {
-          await gameScoreRef.set({
-            'highestScore': score,
-            'lastUpdated': FieldValue.serverTimestamp(),
-          });
-        }
-      } else {
-        // If document doesn't exist, create it with the new score
-        await gameScoreRef.set({
-          'highestScore': score,
-          'lastUpdated': FieldValue.serverTimestamp(),
-        });
+      if (!parentDoc.exists) {
+        print("🚨 Parent document not found: $parentEmail");
+        return;
       }
+
+      Map<String, dynamic> parentData =
+          parentDoc.data() as Map<String, dynamic>;
+
+      print("✅ Parent document found! Data: $parentData");
+
+      List<dynamic> children = parentData["children"] ?? [];
+
+      if (children.isEmpty) {
+        print("🚨 No children found under parent: $parentEmail");
+        return;
+      }
+
+      bool childFound = false;
+
+      print("📌 Searching for childId: $childId in children list...");
+
+      // Loop through children to find the correct childId
+      for (var i = 0; i < children.length; i++) {
+        print("🧐 Checking child: ${children[i]["childId"]}");
+
+        if (children[i]["childId"] == childId) {
+          childFound = true;
+          print("✅ Child ID matched: $childId");
+
+          // Ensure gameData exists
+          if (children[i]["gameData"] == null) {
+            print("🛠 Creating gameData field...");
+            children[i]["gameData"] = {};
+          }
+
+          // Ensure shape_game data exists inside gameData
+          if (children[i]["gameData"][gameName] == null) {
+            print("🛠 Creating shape_game field...");
+            children[i]["gameData"][gameName] = {};
+          }
+
+          // Ensure level data exists inside shape_game
+          if (children[i]["gameData"][gameName][levelKey] == null) {
+            print("🛠 Creating level field...");
+            children[i]["gameData"][gameName]
+                [levelKey] = {"highestScore": 0, "scores": []};
+          }
+
+          // Get the current highest score
+          int highestScore =
+              children[i]["gameData"][gameName][levelKey]["highestScore"] ?? 0;
+
+          // Update highest score if the new score is greater
+          if (score > highestScore) {
+            print("🎯 New highest score: $score (Previous: $highestScore)");
+            children[i]["gameData"][gameName][levelKey]["highestScore"] = score;
+          }
+
+          // Format the date as "DD-MM-YYYY"
+          String formattedDate =
+              DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+          // Append new score entry with date
+          Map<String, dynamic> scoreEntry = {
+            "score": score,
+            "date": formattedDate, // Store only DD-MM-YYYY
+          };
+
+          children[i]["gameData"][gameName][levelKey]["scores"].add(scoreEntry);
+
+          print(
+              "✅ Score $score added to $levelKey with date $formattedDate for child $childId");
+
+          break;
+        }
+      }
+
+      if (!childFound) {
+        print("🚨 Child ID $childId NOT found under parent $parentEmail.");
+        return;
+      }
+
+      // Update Firestore with modified children list
+      print("📤 Saving updated children data...");
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .update({
+        "children": children,
+      });
+
+      print(
+          "✅ Score saved successfully for child $childId in game $gameName (Level: $levelKey).");
+    } catch (e) {
+      print("⚠️ Error saving game data: $e");
     }
   }
 

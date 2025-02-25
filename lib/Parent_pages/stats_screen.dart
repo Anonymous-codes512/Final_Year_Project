@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class StatsScreen extends StatefulWidget {
   final String gameName;
@@ -16,167 +17,137 @@ class StatsScreen extends StatefulWidget {
 }
 
 class _StatsScreenState extends State<StatsScreen> {
-  int selectedIndex = 2; // Default to 'Year'
-  final List<String> filters = ['Week', 'Month', 'Year'];
+  Map<String, Map<String, List<int>>> childrenGameData = {};
+  bool isLoading = true;
 
-  // Generates some sample bar chart data.
-  List<BarChartGroupData> _generateBars() {
-    List<int> data = [400, 450, 500, 600, 900, 700];
-    return List.generate(data.length, (index) {
-      return BarChartGroupData(
-        x: index,
-        barRods: [
-          BarChartRodData(
-              toY: data[index].toDouble(),
-              color: widget.gameColor,
-              width: 20,
-              borderRadius: BorderRadius.circular(2)),
-        ],
-      );
-    });
+  @override
+  void initState() {
+    super.initState();
+    _fetchChildrenData();
   }
 
-  // Builds the full-width toggle bar with shadow.
-  Widget _buildToggleBar() {
-    return SizedBox(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          double buttonWidth =
-              (constraints.maxWidth / filters.length).floorToDouble();
-          return Container(
-            decoration: BoxDecoration(
-              color: Color(0xFFEAE8E8),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  offset: const Offset(0, 2),
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-            child: ToggleButtons(
-              constraints:
-                  BoxConstraints.tightFor(width: buttonWidth - 5, height: 50),
-              isSelected: List.generate(
-                  filters.length, (index) => index == selectedIndex),
-              onPressed: (index) {
-                setState(() {
-                  selectedIndex = index;
-                });
-              },
-              borderRadius: BorderRadius.circular(10),
-              selectedColor: Colors.white,
-              fillColor: Colors.teal,
-              color: Colors.black,
-              children: filters
-                  .map(
-                    (text) => Center(
-                      child: Text(
-                        text,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          );
-        },
-      ),
-    );
+  Future<void> _fetchChildrenData() async {
+    // debugCheckUsersCollection();
+    String? parentEmail = FirebaseAuth.instance.currentUser?.email;
+    if (parentEmail == null || parentEmail.isEmpty) {
+      print("🔥 Parent email is empty or null.");
+      setState(() => isLoading = false);
+      return;
+    }
+
+    parentEmail = parentEmail.toLowerCase().trim(); // Convert to lowercase
+
+    print("🔍 Querying Firestore for parent email: $parentEmail");
+
+    try {
+      // Fetch parent document
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .get();
+
+      if (!parentDoc.exists) {
+        print("🚨 No document found for parent email: $parentEmail");
+        setState(() => isLoading = false);
+        return;
+      }
+
+      print("✅ Parent document found!");
+
+      // Extract children list
+      List<dynamic>? childrenList =
+          (parentDoc.data() as Map<String, dynamic>?)?["children"];
+
+      if (childrenList == null || childrenList.isEmpty) {
+        print("🚨 No children found for parent: $parentEmail");
+        setState(() => isLoading = false);
+        return;
+      }
+
+      print("👶 Available children: $childrenList");
+
+      // Fetch each child's game data
+      for (var child in childrenList) {
+        if (child is Map<String, dynamic> && child.containsKey("childId")) {
+          String childId = child["childId"];
+          print("📊 Fetching game data for child: $childId");
+          await _fetchGameDataForChild(childId);
+        } else {
+          print("⚠️ Invalid child data format: $child");
+        }
+      }
+    } catch (e) {
+      print("⚠️ Error fetching children data: $e");
+    }
+
+    setState(() => isLoading = false);
   }
 
-  // Builds a container that covers 50% of the screen height and holds a BarChart.
-  Widget _buildGraphContainer() {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
-      decoration: BoxDecoration(
-        color: Color(0xFFEAE8E8),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            offset: const Offset(0, 2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      child: BarChart(
-        BarChartData(
-          backgroundColor: Color(0xFFEAE8E8),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: true, reservedSize: 40),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  List<String> months = [
-                    'DEC',
-                    'JAN',
-                    'FEB',
-                    'MAR',
-                    'APR',
-                    'MAY'
-                  ];
-                  return Text(
-                    months[value.toInt()],
-                    style: const TextStyle(color: Colors.black),
-                  );
-                },
-              ),
-            ),
-          ),
-          barGroups: _generateBars(),
-        ),
-      ),
-    );
+  Future<void> debugCheckUsersCollection() async {
+    QuerySnapshot querySnapshot =
+        await FirebaseFirestore.instance.collection("users").get();
+
+    print("📂 Listing all user document IDs:");
+    for (var doc in querySnapshot.docs) {
+      print("📄 User Document ID: ${doc.id}");
+    }
   }
 
-  // Stats row at the bottom.
-  Widget _buildStatsRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildStatColumn('REDUCTION', '135', '30 December',
-            const Color.fromARGB(255, 75, 30, 76)),
-        _buildStatColumn('BALANCE', '500', '', Colors.yellow),
-        _buildStatColumn('ADDITION', '907', '4 April', Colors.redAccent),
-      ],
-    );
-  }
+  Future<void> _fetchGameDataForChild(String childId) async {
+    try {
+      print("🔍 Fetching game data for child ID: $childId");
 
-  Widget _buildStatColumn(
-      String title, String value, String date, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: color,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        if (date.isNotEmpty)
-          Text(
-            date,
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-      ],
-    );
+      // Fetch parent document where children data is stored
+      String? parentEmail = FirebaseAuth.instance.currentUser?.email;
+      if (parentEmail == null) {
+        print("🔥 Parent email is null.");
+        return;
+      }
+
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .get();
+
+      if (!parentDoc.exists) {
+        print("🚨 No document found for parent email: $parentEmail");
+        return;
+      }
+
+      // Extract children list
+      List<dynamic>? childrenList =
+          (parentDoc.data() as Map<String, dynamic>?)?["children"];
+
+      if (childrenList == null || childrenList.isEmpty) {
+        print("🚨 No children found for parent: $parentEmail");
+        return;
+      }
+
+      // Find the specific child's data inside the array
+      Map<String, dynamic>? childData;
+      for (var child in childrenList) {
+        if (child is Map<String, dynamic> && child["childId"] == childId) {
+          childData = child;
+          break;
+        }
+      }
+
+      if (childData == null) {
+        print("🚨 Child ID $childId not found under parent $parentEmail.");
+        return;
+      }
+
+      print("✅ Child Data Found: $childData");
+
+      // Check if game data is inside the child object
+      if (childData.containsKey("gameData")) {
+        print("🎮 Game Data Found: ${childData["gameData"]}");
+      } else {
+        print("🚨 No `gameData` field found for child: $childId");
+      }
+    } catch (e) {
+      print("⚠️ Error fetching game data for child $childId: $e");
+    }
   }
 
   @override
@@ -195,39 +166,28 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          // Use a minimum height constraint instead of a fixed height.
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height,
-          ),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                widget.gameColor.withOpacity(0.4),
-                widget.gameColor,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Full-width toggle bar with shadow.
-              _buildToggleBar(),
-              const SizedBox(height: 20),
-              // First graph container (50% of screen height).
-              _buildGraphContainer(),
-              const SizedBox(height: 20),
-              // Second graph container (also 50% of screen height).
-              _buildGraphContainer(),
-              const SizedBox(height: 20),
-              _buildStatsRow(),
-            ],
-          ),
-        ),
-      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : childrenGameData.isEmpty
+              ? Center(child: Text("No data available."))
+              : SingleChildScrollView(
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: childrenGameData.entries.map((entry) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Child ID: ${entry.key}',
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            SizedBox(height: 10),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
     );
   }
 }

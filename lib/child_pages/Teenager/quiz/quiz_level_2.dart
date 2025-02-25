@@ -1,10 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class QuizScreen2 extends StatefulWidget {
   final int level;
-  const QuizScreen2({super.key, required this.level});
+  final String uid;
+  final String parentEmail;
+  const QuizScreen2(
+      {super.key,
+      required this.level,
+      required this.uid,
+      required this.parentEmail});
 
   @override
   _QuizScreen2State createState() => _QuizScreen2State();
@@ -58,38 +64,88 @@ class _QuizScreen2State extends State<QuizScreen2> {
     }
   }
 
-  Future<void> _saveScoreToFirestore(
-      String gameName, int level, int score) async {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        DocumentReference gameRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('games')
-            .doc(gameName)
-            .collection(level.toString())
-            .doc('history'); // Single doc to store array
+  Future<void> _saveScoreToFirestore() async {
+    try {
+      String parentEmail =
+          widget.parentEmail.toLowerCase().trim(); // Parent document ID
+      String childId = widget.uid; // Child ID inside children array
+      String gameName = "quiz"; // Game name
+      String levelKey = "level_${widget.level}"; // Store level dynamically
 
-        await gameRef.set({
-          'scores': FieldValue.arrayUnion([
-            {
-              'score': score,
-              'level': level,
-              'timestamp': FieldValue.serverTimestamp(),
-            }
-          ])
-        }, SetOptions(merge: true));
+      // Fetch parent document
+      DocumentSnapshot parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .get();
 
-        print("Game score saved successfully in Firestore.");
-      } catch (e) {
-        print("Error saving game score: $e");
+      if (!parentDoc.exists) {
+        print("🚨 Parent document not found: $parentEmail");
+        return;
       }
+
+      Map<String, dynamic> parentData =
+          parentDoc.data() as Map<String, dynamic>;
+
+      List<dynamic> children = parentData["children"] ?? [];
+
+      bool childFound = false;
+
+      // Loop through children to find the correct childId
+      for (var i = 0; i < children.length; i++) {
+        if (children[i]["childId"] == childId) {
+          childFound = true;
+
+          // Ensure gameData exists
+          if (children[i]["gameData"] == null) {
+            children[i]["gameData"] = {};
+          }
+
+          // Ensure quiz data exists inside gameData
+          if (children[i]["gameData"][gameName] == null) {
+            children[i]["gameData"][gameName] = {};
+          }
+
+          // Ensure level data exists inside quiz
+          if (children[i]["gameData"][gameName][levelKey] == null) {
+            children[i]["gameData"][gameName][levelKey] = [];
+          }
+
+          String formattedDate =
+              DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+          // Create a new score entry with formatted date
+          Map<String, dynamic> scoreEntry = {
+            "score": _score,
+            "date": formattedDate, // Store only DD-MM-YYYY
+          };
+
+          children[i]["gameData"][gameName][levelKey].add(scoreEntry);
+          break;
+        }
+      }
+
+      if (!childFound) {
+        print("🚨 Child ID $childId not found under parent $parentEmail.");
+        return;
+      }
+
+      // Update Firestore with modified children list
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(parentEmail)
+          .update({
+        "children": children,
+      });
+
+      print(
+          "✅ Score saved successfully for child $childId in game $gameName (Level: $levelKey).");
+    } catch (e) {
+      print("⚠️ Error saving score to Firestore: $e");
     }
   }
 
   void _showResult() {
-    _saveScoreToFirestore('quiz', widget.level, _score);
+    _saveScoreToFirestore();
 
     showDialog(
       context: context,

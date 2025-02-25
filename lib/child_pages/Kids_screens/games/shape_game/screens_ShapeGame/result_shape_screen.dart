@@ -174,7 +174,10 @@ class _ResultScreenShapeState extends State<ResultScreenShape> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const NumbersPage(),
+                      builder: (_) => const NumbersPage(
+                        userId: '',
+                        parentEmail: '',
+                      ),
                     ),
                   );
                 },

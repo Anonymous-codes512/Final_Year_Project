@@ -116,7 +116,10 @@ class _KidsHomeState extends State<KidsHome> {
                     'assets/images/games.png',
                     'Numbers',
                     'Fun with numbers!',
-                    const NumbersPage(),
+                    NumbersPage(
+                      userId: widget.uid,
+                      parentEmail: widget.parentEmail,
+                    ),
                     Colors.blue.shade300,
                   ),
                   buildGridItem(
@@ -156,6 +159,7 @@ class _KidsHomeState extends State<KidsHome> {
       String subtitle, Widget page, Color color) {
     return GestureDetector(
       onTap: () {
+        print('User Is : ${widget.uid} & Parent Mail : ${widget.parentEmail}');
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => page),
