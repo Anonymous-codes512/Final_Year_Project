@@ -109,8 +109,8 @@ class _NumbersPageState extends State<NumbersPage>
                       context,
                       MaterialPageRoute(
                           builder: (context) => ShapeSplashScreen(
-                              userId: widget.userId ?? '',
-                              parentEmail: widget.parentEmail ?? '')),
+                              userId: widget.userId,
+                              parentEmail: widget.parentEmail)),
                     );
                   }),
                   buildGameButton(
@@ -120,8 +120,8 @@ class _NumbersPageState extends State<NumbersPage>
                       context,
                       MaterialPageRoute(
                           builder: (context) => CarLevelSelectionScreen(
-                              userId: widget.userId ?? '',
-                              parentEmail: widget.parentEmail ?? '')),
+                              userId: widget.userId,
+                              parentEmail: widget.parentEmail)),
                     );
                   }),
                   // buildGameButton(context, 'New Game', Icons.add_circle, () {

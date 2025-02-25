@@ -119,16 +119,16 @@ class _CarResultScreenState extends State<CarResultScreen> {
   Future<void> saveGameData(int score) async {
     try {
       String? parentEmail =
-          widget.parentEmail?.toLowerCase().trim(); // Parent document ID
+          widget.parentEmail.toLowerCase().trim(); // Parent document ID
       String? childId = widget.userId; // Child ID inside children array
 
       // 🔥 Check if parentEmail or childId is null/empty
-      if (parentEmail == null || parentEmail.isEmpty) {
+      if (parentEmail.isEmpty) {
         print("🚨 Error: parentEmail is null or empty.");
         return;
       }
 
-      if (childId == null || childId.isEmpty) {
+      if (childId.isEmpty) {
         print("🚨 Error: childId is null or empty.");
         return;
       }
@@ -197,11 +197,9 @@ class _CarResultScreenState extends State<CarResultScreen> {
               children[i]["gameData"][gameName][levelKey]["highestScore"] ?? 0;
 
           // Update highest score if the new score is greater
-          bool isNewHighestScore = false;
           if (score > highestScore) {
             print("🎯 New highest score: $score (Previous: $highestScore)");
             children[i]["gameData"][gameName][levelKey]["highestScore"] = score;
-            isNewHighestScore = true;
           }
 
           // Format the date as "DD-MM-YYYY"
