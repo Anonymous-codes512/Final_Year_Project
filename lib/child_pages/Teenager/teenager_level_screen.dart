@@ -1,14 +1,71 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:final_year_project/Authentication/login_screen.dart';
 import 'package:final_year_project/child_pages/Teenager/quiz/quiz.dart';
 import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level_2.dart';
 import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level_3.dart';
-import 'package:flutter/material.dart';
 
-class LevelScreen extends StatelessWidget {
+class LevelScreen extends StatefulWidget {
   final String uid;
   final String parentEmail;
 
   const LevelScreen({super.key, required this.uid, required this.parentEmail});
+
+  @override
+  _LevelScreenState createState() => _LevelScreenState();
+}
+
+class _LevelScreenState extends State<LevelScreen> {
+  int playCount = 0;
+  static const int maxPlays = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlayCount();
+  }
+
+  Future<void> _loadPlayCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      playCount = prefs.getInt('playCount_${widget.uid}') ?? 0;
+    });
+  }
+
+  Future<void> _incrementPlayCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      playCount++;
+    });
+    await prefs.setInt('playCount_${widget.uid}', playCount);
+  }
+
+  void _showLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Play Limit Reached"),
+        content: const Text(
+            "You have reached the maximum of 3 plays for today. Try again tomorrow!"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handlePlay(VoidCallback navigateToQuiz) {
+    if (playCount >= maxPlays) {
+      _showLimitDialog();
+    } else {
+      _incrementPlayCount();
+      navigateToQuiz();
+    }
+  }
+
   void _logout(BuildContext context) {
     Navigator.pushReplacement(
       context,
@@ -24,21 +81,19 @@ class LevelScreen extends StatelessWidget {
           'Teenagers Quiz Panel',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF373E37), // Black shade as per #373e37
+        backgroundColor: const Color(0xFF373E37),
         elevation: 4,
         actions: [
-          // Sign out button in the AppBar
           IconButton(
             icon: const Icon(Icons.exit_to_app, color: Colors.white),
             onPressed: () => _logout(context),
           ),
         ],
       ),
-      // Background Gradient
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Color(0xFFEDE7F6)], // Soft gradient
+            colors: [Colors.white, const Color(0xFFEDE7F6)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -51,7 +106,6 @@ class LevelScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Title
                   const Text(
                     'Select Test Level',
                     style: TextStyle(
@@ -62,72 +116,61 @@ class LevelScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // Level 1 Button
                   _buildLevelCard(
-                    context,
                     'Level 1',
                     Icons.looks_one,
                     'Beginner Quiz',
-                    const Color(0xFFffde59), // Yellow shade #ffde59
-                    () {
+                    const Color(0xFFffde59),
+                    () => _handlePlay(() {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => QuizScreen(
                             level: 1,
-                            uid: uid,
-                            parentEmail: parentEmail,
+                            uid: widget.uid,
+                            parentEmail: widget.parentEmail,
                           ),
                         ),
                       );
-                    },
+                    }),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Level 2 Button
                   _buildLevelCard(
-                    context,
                     'Level 2',
                     Icons.looks_two,
                     'Intermediate Quiz',
-                    const Color(0xFF373e37), // Dark color for contrast
-                    () {
+                    const Color(0xFF373e37),
+                    () => _handlePlay(() {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => QuizScreen2(
                             level: 2,
-                            uid: uid,
-                            parentEmail: parentEmail,
+                            uid: widget.uid,
+                            parentEmail: widget.parentEmail,
                           ),
                         ),
                       );
-                    },
+                    }),
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Level 3 Button
                   _buildLevelCard(
-                    context,
                     'Level 3',
                     Icons.looks_3,
                     'Advanced Quiz',
-                    const Color(0xFFffde59), // Yellow shade #ffde59
-                    () {
+                    const Color(0xFFffde59),
+                    () => _handlePlay(() {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => MultiplicationQuizPage(
                             level: 3,
-                            uid: uid,
-                            parentEmail: parentEmail,
+                            uid: widget.uid,
+                            parentEmail: widget.parentEmail,
                           ),
                         ),
                       );
-                    },
+                    }),
                   ),
                 ],
               ),
@@ -138,9 +181,7 @@ class LevelScreen extends StatelessWidget {
     );
   }
 
-  // Custom Card Builder for Levels
   Widget _buildLevelCard(
-    BuildContext context,
     String level,
     IconData icon,
     String description,

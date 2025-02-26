@@ -221,7 +221,7 @@ class _CarResultScreenState extends State<CarResultScreen> {
               lastScores;
 
           print(
-              "✅ Score ${score} added to $levelKey with date $formattedDate for child $childId");
+              "✅ Score $score added to $levelKey with date $formattedDate for child $childId");
 
           break;
         }

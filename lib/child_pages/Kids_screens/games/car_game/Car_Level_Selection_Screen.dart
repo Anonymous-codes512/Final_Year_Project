@@ -1,13 +1,17 @@
 import 'package:final_year_project/child_pages/Kids_screens/games/car_game/car_game.dart';
 import 'package:flutter/material.dart';
-// import 'game_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 
 class CarLevelSelectionScreen extends StatefulWidget {
   final String userId;
   final String parentEmail;
-  const CarLevelSelectionScreen(
-      {required this.userId, required this.parentEmail, super.key});
+  const CarLevelSelectionScreen({
+    required this.userId,
+    required this.parentEmail,
+    super.key,
+  });
 
   @override
   _CarLevelSelectionScreenState createState() =>
@@ -19,14 +23,13 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text(
-            'Level Selection',
-            style: TextStyle(color: Color(0xffffffff)),
-          ),
-          backgroundColor: const Color.fromARGB(255, 239, 77, 77),
-          iconTheme: IconThemeData(
-            color: Colors.white,
-          )),
+        title: const Text(
+          'Level Selection',
+          style: TextStyle(color: Color(0xffffffff)),
+        ),
+        backgroundColor: const Color.fromARGB(255, 239, 77, 77),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Container(
         height: MediaQuery.of(context).size.height,
         color: const Color.fromARGB(255, 251, 196, 196),
@@ -37,7 +40,7 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // Header
+                  // Header Animation
                   SizedBox(
                     height: 200,
                     width: double.infinity,
@@ -51,57 +54,29 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                     Icons.looks_one,
                     'Start with simple levels!',
                     Colors.green.shade400,
-                    KidCarGame(
-                      level: 'Easy',
-                      carImage: 'assets/games/green car.png',
-                      userId: widget.userId,
-                      parentEmail: widget.parentEmail,
-                    ),
+                    'Easy',
+                    'assets/games/green car.png',
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  const SizedBox(height: 20),
                   _buildLevelCard(
                     context,
                     'Medium',
                     Icons.looks_two,
                     'Challenge yourself a bit more!',
                     Colors.orange.shade400,
-                    KidCarGame(
-                      level: 'Medium',
-                      carImage: 'assets/games/orange car.png',
-                      userId: widget.userId,
-                      parentEmail: widget.parentEmail,
-                    ),
+                    'Medium',
+                    'assets/games/orange car.png',
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  const SizedBox(height: 20),
                   _buildLevelCard(
                     context,
                     'Hard',
                     Icons.trending_up,
                     'Get ready for tough challenges!',
                     Colors.red.shade400,
-                    KidCarGame(
-                      level: 'Hard',
-                      carImage: 'assets/games/red car.png',
-                      userId: widget.userId,
-                      parentEmail: widget.parentEmail,
-                    ),
+                    'Hard',
+                    'assets/games/red car.png',
                   ),
-
-                  // _buildLevelCard(
-                  //   context,
-                  //   'Advanced',
-                  //   Icons.star,
-                  //   'Only for the best players!',
-                  //   Colors.red.shade400,
-                  //   GameScreen(
-                  //     level: 'Advanced',
-                  //     themeColor: Colors.red.shade400,
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -111,21 +86,86 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
     );
   }
 
+  // Check if user can play the level (3 times per day)
+  Future<bool> _canPlayLevel(String level) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    String key = '${widget.userId}_$level';
+
+    int playCount = prefs.getInt('$key-count') ?? 0;
+    String lastPlayed = prefs.getString('$key-date') ?? '';
+
+    // Reset if the date has changed
+    if (lastPlayed != today) {
+      await prefs.setString('$key-date', today);
+      await prefs.setInt('$key-count', 0);
+      playCount = 0;
+    }
+
+    return playCount < 3;
+  }
+
+  // Increment play count after playing
+  Future<void> _incrementPlayCount(String level) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    String key = '${widget.userId}_$level';
+
+    int playCount = prefs.getInt('$key-count') ?? 0;
+    await prefs.setString('$key-date', today);
+    await prefs.setInt('$key-count', playCount + 1);
+  }
+
+  // Show dialog when limit is reached
+  void _showLimitDialog(BuildContext context, String level) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Daily Limit Reached"),
+          content: Text(
+              "You have already played the $level level 3 times today. Come back tomorrow!"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Build Level Card
   Widget _buildLevelCard(
     BuildContext context,
     String title,
     IconData icon,
     String subtitle,
     Color color,
-    Widget page,
+    String level,
+    String carImage,
   ) {
     return GestureDetector(
-      onTap: () {
-        print('Parent Mail : ${widget.parentEmail}');
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => page),
-        );
+      onTap: () async {
+        if (await _canPlayLevel(level)) {
+          await _incrementPlayCount(level);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => KidCarGame(
+                level: level,
+                carImage: carImage,
+                userId: widget.userId,
+                parentEmail: widget.parentEmail,
+              ),
+            ),
+          );
+        } else {
+          _showLimitDialog(context, level);
+        }
       },
       child: Container(
         decoration: BoxDecoration(

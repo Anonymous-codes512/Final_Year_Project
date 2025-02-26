@@ -1,130 +1,131 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:final_year_project/Parent_pages/stats_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-class GameStatsScreen extends StatelessWidget {
+class GameStatsScreen extends StatefulWidget {
   const GameStatsScreen({super.key});
+
+  @override
+  _GameStatsScreenState createState() => _GameStatsScreenState();
+}
+
+class _GameStatsScreenState extends State<GameStatsScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  String? userEmail;
+  List<Map<String, dynamic>> children = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserData();
+  }
+
+  Future<void> _getUserData() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      setState(() {
+        userEmail = user.email;
+      });
+
+      if (userEmail != null) {
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(userEmail).get();
+
+        if (userDoc.exists) {
+          var data = userDoc.data() as Map<String, dynamic>;
+          if (data.containsKey('children') && data['children'] is List) {
+            setState(() {
+              children = List<Map<String, dynamic>>.from(data['children']);
+            });
+          }
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Game Stats Options',
-          style: TextStyle(color: Color(0Xffffffff)),
-        ),
-        backgroundColor: const Color(0xFF332F46),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text("Children List",
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0XFFFFFFFF))),
+        backgroundColor: Color(0xFF332F46),
+        iconTheme: IconThemeData(color: Color(0XFFFFFFFF)),
+        centerTitle: true,
+        elevation: 4,
       ),
       body: Container(
-        height: MediaQuery.of(context).size.height,
-        color: const Color(0xFF332F46),
-        child: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Please Select Game',
-                    style: GoogleFonts.sigmar(
-                      fontSize: 36,
-                      color: const Color(0xFFFFFFFF),
-                    ),
-                  ),
-                  const SizedBox(height: 50),
-                  _buildLevelCard(
-                    context,
-                    'additionGame',
-                    Icons.add_circle,
-                    Colors.green.shade400,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildLevelCard(
-                    context,
-                    'shapes game',
-                    Icons.category,
-                    Colors.orange.shade400,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildLevelCard(
-                    context,
-                    'catch the ball',
-                    Icons.sports_soccer,
-                    Colors.red.shade400,
-                  ),
-                ],
-              ),
-            ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [Color(0xFF332F46), Color(0xFF48435F)],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLevelCard(
-    BuildContext context,
-    String title,
-    IconData icon,
-    Color color,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        // Pass the game name and color to the StatsScreen
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                StatsScreen(gameName: title, gameColor: color),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x85000000),
-              offset: Offset(0, 0),
-              blurRadius: 5,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 8,
-          color: color.withOpacity(0.9),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-            child: Row(
-              children: [
-                Icon(icon, size: 40, color: Colors.white),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+        child: userEmail == null
+            ? const Center(
+                child: CircularProgressIndicator(color: Colors.white))
+            : children.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No children found",
+                      style: TextStyle(
                           color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: children.length,
+                    itemBuilder: (context, index) {
+                      final child = children[index];
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                      ),
-                      const SizedBox(height: 5),
-                    ],
+                        elevation: 5,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.deepPurple,
+                            child: Text(
+                              child['name']?.substring(0, 1).toUpperCase() ??
+                                  '?',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          title: Text(
+                            child['name'] ?? 'Unknown',
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text("Age: ${child['age'] ?? 'N/A'}",
+                              style: const TextStyle(
+                                  fontSize: 16, color: Colors.grey)),
+                          onTap: () => {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    StatsScreen(childData: child),
+                              ),
+                            )
+                          },
+                        ),
+                      );
+                    },
                   ),
-                ),
-                const Icon(Icons.arrow_forward_ios, color: Colors.white),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

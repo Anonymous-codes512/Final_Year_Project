@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'game_screen.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 class KidsLevelScreen extends StatefulWidget {
   final String userId;
@@ -14,6 +16,56 @@ class KidsLevelScreen extends StatefulWidget {
 }
 
 class _KidsLevelScreenState extends State<KidsLevelScreen> {
+  Map<String, int> levelPlayCount = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLevelCounts();
+  }
+
+  Future<void> _loadLevelCounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    for (var level in ['Easy', 'Medium', 'Hard', 'Advanced']) {
+      levelPlayCount[level] =
+          prefs.getInt('${widget.userId}_$level\_$today') ?? 0;
+    }
+    setState(() {});
+  }
+
+  Future<void> _incrementLevelCount(String level) async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final key = '${widget.userId}_$level\_$today';
+    int count = (prefs.getInt(key) ?? 0) + 1;
+    await prefs.setInt(key, count);
+    setState(() {
+      levelPlayCount[level] = count;
+    });
+  }
+
+  void _showLimitPopup(String level) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Daily Limit Reached'),
+          content: Text(
+              'You have reached the daily limit for $level level! Try again tomorrow.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,29 +81,21 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
             child: Padding(
               padding: const EdgeInsets.only(
                   left: 16, right: 16, top: 40, bottom: 16),
-              // padding: const EdgeInsets.all(20.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  // Header
                   SizedBox(
                     height: 225,
                     width: double.infinity,
                     child: Lottie.asset('assets/animation/Animation1.json'),
                   ),
-                  // Level Cards
                   _buildLevelCard(
                     context,
                     'Easy',
                     Icons.looks_one,
                     'Start with simple levels!',
                     Colors.green.shade400,
-                    GameScreen(
-                      level: 'Easy',
-                      themeColor: Colors.green.shade400,
-                      userId: widget.userId,
-                      parentEmail: widget.parentEmail,
-                    ),
+                    'Easy',
                   ),
                   const SizedBox(height: 15),
                   _buildLevelCard(
@@ -60,12 +104,7 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                     Icons.looks_two,
                     'Challenge yourself a bit more!',
                     Colors.blue.shade400,
-                    GameScreen(
-                      level: 'Medium',
-                      themeColor: Colors.blue.shade400,
-                      userId: widget.userId,
-                      parentEmail: widget.parentEmail,
-                    ),
+                    'Medium',
                   ),
                   const SizedBox(height: 15),
                   _buildLevelCard(
@@ -74,12 +113,7 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                     Icons.trending_up,
                     'Get ready for tough challenges!',
                     Colors.orange.shade400,
-                    GameScreen(
-                      level: 'Hard',
-                      themeColor: Colors.orange.shade400,
-                      userId: widget.userId,
-                      parentEmail: widget.parentEmail,
-                    ),
+                    'Hard',
                   ),
                   const SizedBox(height: 15),
                   _buildLevelCard(
@@ -88,12 +122,7 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                     Icons.star,
                     'Only for the best players!',
                     Colors.red.shade400,
-                    GameScreen(
-                      level: 'Advanced',
-                      themeColor: Colors.red.shade400,
-                      userId: widget.userId,
-                      parentEmail: widget.parentEmail,
-                    ),
+                    'Advanced',
                   ),
                 ],
               ),
@@ -110,15 +139,26 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
     IconData icon,
     String subtitle,
     Color color,
-    Widget page,
+    String level,
   ) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => page),
-        );
-        print('${widget.userId}, ${widget.parentEmail}');
+      onTap: () async {
+        if ((levelPlayCount[level] ?? 0) < 3) {
+          await _incrementLevelCount(level);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => GameScreen(
+                level: level,
+                themeColor: color,
+                userId: widget.userId,
+                parentEmail: widget.parentEmail,
+              ),
+            ),
+          );
+        } else {
+          _showLimitPopup(level);
+        }
       },
       child: Container(
         decoration: BoxDecoration(
