@@ -3,6 +3,7 @@ import 'game_screen.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class KidsLevelScreen extends StatefulWidget {
   final String userId;
@@ -17,27 +18,67 @@ class KidsLevelScreen extends StatefulWidget {
 
 class _KidsLevelScreenState extends State<KidsLevelScreen> {
   Map<String, int> levelPlayCount = {};
+  Map<String, int> levelLimits = {}; // Map to store level limits
 
   @override
   void initState() {
     super.initState();
     _loadLevelCounts();
+    _fetchLevelLimits(); // Fetch the level limits from Firebase
   }
 
+  // Load play counts from SharedPreferences
   Future<void> _loadLevelCounts() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().substring(0, 10);
     for (var level in ['Easy', 'Medium', 'Hard', 'Advanced']) {
       levelPlayCount[level] =
-          prefs.getInt('${widget.userId}_$level\_$today') ?? 0;
+          prefs.getInt('${widget.userId}_${level}_$today') ?? 0;
     }
     setState(() {});
   }
 
+  // Fetch the daily play limits for each level from Firebase
+  Future<void> _fetchLevelLimits() async {
+    try {
+      // Fetch the parent document using parentEmail
+      final parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: widget.parentEmail.toLowerCase().trim())
+          .get();
+
+      if (parentDoc.docs.isNotEmpty) {
+        final parentData = parentDoc.docs.first.data();
+
+        // Fetch limit for the specific game (AdditionaGame in this case)
+        final additionaGameLimit = parentData['AdditionaGame']?['Limit'] ??
+            3; // Default to 3 if not found
+        print("AdditionaGame Limit: $additionaGameLimit");
+
+        // Save the limit in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(
+            '${widget.userId}_AdditionaGame_limit', additionaGameLimit);
+
+        // Optionally, update the local variable (if you need to use it in the app)
+        setState(() {
+          levelLimits = {
+            'AdditionaGame': additionaGameLimit,
+          };
+        });
+      } else {
+        print("🚨 Parent document not found in Firestore.");
+      }
+    } catch (e) {
+      print("⚠️ Error fetching level limits from Firestore: $e");
+    }
+  }
+
+  // Increment the level play count and save it to SharedPreferences
   Future<void> _incrementLevelCount(String level) async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().substring(0, 10);
-    final key = '${widget.userId}_$level\_$today';
+    final key = '${widget.userId}_${level}_$today';
     int count = (prefs.getInt(key) ?? 0) + 1;
     await prefs.setInt(key, count);
     setState(() {
@@ -45,6 +86,7 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
     });
   }
 
+  // Show popup when daily limit is reached
   void _showLimitPopup(String level) {
     showDialog(
       context: context,
@@ -143,7 +185,10 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
   ) {
     return GestureDetector(
       onTap: () async {
-        if ((levelPlayCount[level] ?? 0) < 3) {
+        int levelLimit =
+            levelLimits[level] ?? 3; // Default to 3 if limit is not found
+
+        if ((levelPlayCount[level] ?? 0) < levelLimit) {
           await _incrementLevelCount(level);
           Navigator.push(
             context,

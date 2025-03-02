@@ -1,4 +1,5 @@
 import 'package:final_year_project/Parent_pages/game_stats_selection_screen.dart';
+import 'package:final_year_project/Parent_pages/set_game_limit.dart';
 import 'package:flutter/material.dart';
 import 'package:final_year_project/Authentication/login_screen.dart';
 import 'package:final_year_project/Chatbot/chat_screen.dart';
@@ -135,6 +136,16 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
+                    _buildClickableContainers(
+                      label: 'Set Game Limit',
+                      imagePath: 'assets/Set Limit.png',
+                      onTap: () => _navigateToScreen(SetGameLimit()),
+                      containerColor: const Color(0xFFdd5851),
+                      textColor: Colors.white,
+                      width: MediaQuery.of(context).size.width,
+                      isHome: true,
+                    ),
+                    const SizedBox(height: 8),
                     _buildClickableContainer(
                       label: 'View Game Stats',
                       imagePath: 'assets/stats.png',
@@ -180,6 +191,73 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
       child: Container(
         width: width, // Set width dynamically
         height: isHome ? 160 : 150, // Increased height of containers
+        decoration: BoxDecoration(
+          color: containerColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 6,
+              offset: const Offset(2, 2),
+            ),
+          ],
+        ),
+        child: isHome
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(imagePath,
+                      height: 130, width: 130), // Increased image size
+                  const SizedBox(width: 16),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 24, // Increased font size
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      fontFamily: 'Montserrat',
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(imagePath,
+                      height: 80, width: 80), // Increased image size
+                  const SizedBox(height: 8),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 20, // Increased font size
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Montserrat',
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildClickableContainers({
+    required String label,
+    required String imagePath,
+    required VoidCallback onTap,
+    required double width, // Dynamic width for the container
+    required Color containerColor, // Dynamic container color
+    required Color textColor, // Dynamic text color
+    bool isHome = false, // Flag to check if it's the Home screen
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: width, // Set width dynamically
+        height: 100, // Increased height of containers
         decoration: BoxDecoration(
           color: containerColor,
           borderRadius: BorderRadius.circular(16),

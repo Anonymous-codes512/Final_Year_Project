@@ -4,6 +4,8 @@ import 'package:final_year_project/Authentication/login_screen.dart';
 import 'package:final_year_project/child_pages/Teenager/quiz/quiz.dart';
 import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level_2.dart';
 import 'package:final_year_project/child_pages/Teenager/quiz/quiz_level_3.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class LevelScreen extends StatefulWidget {
   final String uid;
@@ -17,36 +19,72 @@ class LevelScreen extends StatefulWidget {
 
 class _LevelScreenState extends State<LevelScreen> {
   int playCount = 0;
-  static const int maxPlays = 3;
+  int maxPlays = 3;
+  String todayDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
 
   @override
   void initState() {
     super.initState();
     _loadPlayCount();
+    _fetchMaxPlays(); // Fetch the max plays (limit) from Firestore
   }
 
+  // Load the current play count from SharedPreferences
   Future<void> _loadPlayCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      playCount = prefs.getInt('playCount_${widget.uid}') ?? 0;
-    });
+    try {
+      // Fetch the play count for today from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        playCount = prefs.getInt('playCount_${widget.uid}_$todayDate') ?? 0;
+      });
+    } catch (e) {
+      print("⚠️ Error loading play count from SharedPreferences: $e");
+    }
   }
 
+  // Fetch the daily play limit from Firestore and store it in SharedPreferences
+  Future<void> _fetchMaxPlays() async {
+    try {
+      // Fetch the parent document using the parent email
+      final parentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: widget.parentEmail.toLowerCase().trim())
+          .get();
+
+      if (parentDoc.docs.isNotEmpty) {
+        final parentData = parentDoc.docs.first.data();
+        final quizLimit = parentData['quiz']?['Limit'] ?? 0;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('maxPlays_${widget.uid}_$todayDate', quizLimit);
+
+        setState(() {
+          maxPlays = quizLimit; // Set the max plays for the quiz game
+        });
+      } else {
+        print("🚨 Parent document not found in Firestore.");
+      }
+    } catch (e) {
+      print("⚠️ Error fetching max plays from Firestore: $e");
+    }
+  }
+
+  // Increment the play count and save it to SharedPreferences
   Future<void> _incrementPlayCount() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       playCount++;
     });
-    await prefs.setInt('playCount_${widget.uid}', playCount);
+    await prefs.setInt('playCount_${widget.uid}_$todayDate', playCount);
   }
 
+  // Show a dialog when the play limit is reached
   void _showLimitDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Play Limit Reached"),
-        content: const Text(
-            "You have reached the maximum of 3 plays for today. Try again tomorrow!"),
+        content: Text(
+            "You have reached the maximum of $maxPlays plays for today. Try again tomorrow!"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -57,6 +95,7 @@ class _LevelScreenState extends State<LevelScreen> {
     );
   }
 
+  // Handle the play button press
   void _handlePlay(VoidCallback navigateToQuiz) {
     if (playCount >= maxPlays) {
       _showLimitDialog();
@@ -66,6 +105,7 @@ class _LevelScreenState extends State<LevelScreen> {
     }
   }
 
+  // Logout function
   void _logout(BuildContext context) {
     Navigator.pushReplacement(
       context,
