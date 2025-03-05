@@ -30,54 +30,56 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
         backgroundColor: const Color.fromARGB(255, 239, 77, 77),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Container(
-        height: MediaQuery.of(context).size.height,
-        color: const Color.fromARGB(255, 251, 196, 196),
-        child: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  // Header Animation
-                  SizedBox(
-                    height: 200,
-                    width: double.infinity,
-                    child: Lottie.asset('assets/animation/Animation2.json'),
-                  ),
-                  const SizedBox(height: 25),
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          color: const Color.fromARGB(255, 251, 196, 196),
+          child: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    // Header Animation
+                    SizedBox(
+                      height: 200,
+                      width: double.infinity,
+                      child: Lottie.asset('assets/animation/Animation2.json'),
+                    ),
+                    const SizedBox(height: 25),
 
-                  _buildLevelCard(
-                    context,
-                    'Easy',
-                    Icons.looks_one,
-                    'Start with simple levels!',
-                    Colors.green.shade400,
-                    'Easy',
-                    'assets/games/green car.png',
-                  ),
-                  const SizedBox(height: 20),
-                  _buildLevelCard(
-                    context,
-                    'Medium',
-                    Icons.looks_two,
-                    'Challenge yourself a bit more!',
-                    Colors.orange.shade400,
-                    'Medium',
-                    'assets/games/orange car.png',
-                  ),
-                  const SizedBox(height: 20),
-                  _buildLevelCard(
-                    context,
-                    'Hard',
-                    Icons.trending_up,
-                    'Get ready for tough challenges!',
-                    Colors.red.shade400,
-                    'Hard',
-                    'assets/games/red car.png',
-                  ),
-                ],
+                    _buildLevelCard(
+                      context,
+                      'Easy',
+                      Icons.looks_one,
+                      'Start with simple levels!',
+                      Colors.green.shade400,
+                      'Easy',
+                      'assets/games/green car.png',
+                    ),
+                    const SizedBox(height: 20),
+                    _buildLevelCard(
+                      context,
+                      'Medium',
+                      Icons.looks_two,
+                      'Challenge yourself a bit more!',
+                      Colors.orange.shade400,
+                      'Medium',
+                      'assets/games/orange car.png',
+                    ),
+                    const SizedBox(height: 20),
+                    _buildLevelCard(
+                      context,
+                      'Hard',
+                      Icons.trending_up,
+                      'Get ready for tough challenges!',
+                      Colors.red.shade400,
+                      'Hard',
+                      'assets/games/red car.png',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -199,16 +201,16 @@ class _CarLevelSelectionScreenState extends State<CarLevelSelectionScreen> {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      // const SizedBox(height: 5),
                       Text(
                         subtitle,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Colors.white70,
                         ),
                       ),

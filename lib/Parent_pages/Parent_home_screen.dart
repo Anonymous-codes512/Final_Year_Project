@@ -152,7 +152,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                       onTap: () => _navigateToScreen(GameStatsScreen()),
                       containerColor: const Color(0xFF332F46),
                       textColor: Colors.white,
-                      width: MediaQuery.of(context).size.width,
+                      width: MediaQuery.of(context).size.width - 10,
                       isHome: true,
                     ),
                   ],
@@ -214,9 +214,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: textColor,
-                      fontSize: 24, // Increased font size
+                      fontSize: 20, // Increased font size
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                      letterSpacing: 1,
                       fontFamily: 'Montserrat',
                     ),
                   ),
@@ -281,9 +281,9 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: textColor,
-                      fontSize: 24, // Increased font size
+                      fontSize: 20, // Increased font size
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                      letterSpacing: 1,
                       fontFamily: 'Montserrat',
                     ),
                   ),

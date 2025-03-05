@@ -56,12 +56,13 @@ class _NumbersPageState extends State<NumbersPage>
         ),
         child: SafeArea(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
                 "Let's Play",
                 style: GoogleFonts.sigmar(
                   textStyle: TextStyle(
-                    fontSize: 50,
+                    fontSize: 40,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFFF28500),
                   ),
@@ -71,7 +72,7 @@ class _NumbersPageState extends State<NumbersPage>
                 " and",
                 style: GoogleFonts.sigmar(
                   textStyle: TextStyle(
-                    fontSize: 50,
+                    fontSize: 40,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFFF28500),
                   ),
@@ -81,19 +82,19 @@ class _NumbersPageState extends State<NumbersPage>
                 "Learn!",
                 style: GoogleFonts.sigmar(
                   textStyle: const TextStyle(
-                    fontSize: 50,
+                    fontSize: 40,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFF28500),
                   ),
                 ),
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 40),
               GridView.count(
                 shrinkWrap: true,
                 crossAxisCount: 2,
                 mainAxisSpacing: 20,
                 crossAxisSpacing: 10,
-                padding: const EdgeInsets.symmetric(horizontal: 50),
+                padding: const EdgeInsets.symmetric(horizontal: 40),
                 children: [
                   buildGameButton(context, 'Addition Game', Icons.add_circle,
                       () {
@@ -132,7 +133,7 @@ class _NumbersPageState extends State<NumbersPage>
                   // }),
                 ],
               ),
-              const SizedBox(height: 20),
+              // const SizedBox(height: 0),
               AnimatedBuilder(
                 animation: _animation,
                 builder: (context, child) {
@@ -143,8 +144,8 @@ class _NumbersPageState extends State<NumbersPage>
                 },
                 child: Image.asset(
                   'assets/duolingoo.png', // Ensure you have the Duolingo icon in assets
-                  width: 300,
-                  height: 200,
+                  width: 200,
+                  height: 100,
                 ),
               ),
             ],
@@ -170,7 +171,7 @@ class _NumbersPageState extends State<NumbersPage>
             ),
           ],
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

@@ -240,7 +240,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ),
       body: SingleChildScrollView(
         child: Container(
-          height: MediaQuery.of(context).size.height,
+          // height: MediaQuery.of(context).size.height,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [widget.themeColor.withOpacity(0.7), widget.themeColor],
@@ -254,7 +254,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               // Timer and Score Section
               Container(
                 width: MediaQuery.of(context).size.width,
-                height: 325,
+                height: 300,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(

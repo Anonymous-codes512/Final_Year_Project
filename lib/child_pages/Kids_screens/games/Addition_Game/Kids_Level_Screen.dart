@@ -115,58 +115,60 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
         title: const Text('Level Selection'),
         backgroundColor: const Color(0xFFF9D77E),
       ),
-      body: Container(
-        height: MediaQuery.of(context).size.height,
-        color: const Color(0xFFFBF8C4),
-        child: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 40, bottom: 16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 225,
-                    width: double.infinity,
-                    child: Lottie.asset('assets/animation/Animation1.json'),
-                  ),
-                  _buildLevelCard(
-                    context,
-                    'Easy',
-                    Icons.looks_one,
-                    'Start with simple levels!',
-                    Colors.green.shade400,
-                    'Easy',
-                  ),
-                  const SizedBox(height: 15),
-                  _buildLevelCard(
-                    context,
-                    'Medium',
-                    Icons.looks_two,
-                    'Challenge yourself a bit more!',
-                    Colors.blue.shade400,
-                    'Medium',
-                  ),
-                  const SizedBox(height: 15),
-                  _buildLevelCard(
-                    context,
-                    'Hard',
-                    Icons.trending_up,
-                    'Get ready for tough challenges!',
-                    Colors.orange.shade400,
-                    'Hard',
-                  ),
-                  const SizedBox(height: 15),
-                  _buildLevelCard(
-                    context,
-                    'Advanced',
-                    Icons.star,
-                    'Only for the best players!',
-                    Colors.red.shade400,
-                    'Advanced',
-                  ),
-                ],
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          color: const Color(0xFFFBF8C4),
+          child: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 16, right: 16, top: 40, bottom: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 225,
+                      width: double.infinity,
+                      child: Lottie.asset('assets/animation/Animation1.json'),
+                    ),
+                    _buildLevelCard(
+                      context,
+                      'Easy',
+                      Icons.looks_one,
+                      'Start with simple levels!',
+                      Colors.green.shade400,
+                      'Easy',
+                    ),
+                    const SizedBox(height: 15),
+                    _buildLevelCard(
+                      context,
+                      'Medium',
+                      Icons.looks_two,
+                      'Challenge yourself a bit more!',
+                      Colors.blue.shade400,
+                      'Medium',
+                    ),
+                    const SizedBox(height: 15),
+                    _buildLevelCard(
+                      context,
+                      'Hard',
+                      Icons.trending_up,
+                      'Get ready for tough challenges!',
+                      Colors.orange.shade400,
+                      'Hard',
+                    ),
+                    const SizedBox(height: 15),
+                    _buildLevelCard(
+                      context,
+                      'Advanced',
+                      Icons.star,
+                      'Only for the best players!',
+                      Colors.red.shade400,
+                      'Advanced',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -237,16 +239,16 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      // const SizedBox(height: 5),
                       Text(
                         subtitle,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Colors.white70,
                         ),
                       ),
