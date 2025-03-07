@@ -1,3 +1,4 @@
+import 'package:final_year_project/child_pages/subscription_plan_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'Addition_Game/kids_level_screen.dart';
@@ -125,12 +126,15 @@ class _NumbersPageState extends State<NumbersPage>
                               parentEmail: widget.parentEmail)),
                     );
                   }),
-                  // buildGameButton(context, 'New Game', Icons.add_circle, () {
-                  //   Navigator.push(
-                  //     context,
-                  //     MaterialPageRoute(builder: (context) => SplashScreen()),
-                  //   );
-                  // }),
+                  buildGameButton(
+                      context, 'See Subscriptions', Icons.add_circle, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => SubscriptionPlanScreen(
+                              themeColor: Color(0xFFF28500))),
+                    );
+                  }),
                 ],
               ),
               // const SizedBox(height: 0),

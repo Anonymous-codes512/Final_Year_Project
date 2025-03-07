@@ -62,7 +62,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _setTimeBasedOnLevel() {
-    print('${widget.userId} and ${widget.parentEmail}');
     switch (widget.level) {
       case 'Easy':
         _timeLeft = 180;
@@ -240,7 +239,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ),
       body: SingleChildScrollView(
         child: Container(
-          // height: MediaQuery.of(context).size.height,
+          height: MediaQuery.of(context).size.height,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [widget.themeColor.withOpacity(0.7), widget.themeColor],

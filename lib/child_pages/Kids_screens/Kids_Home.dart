@@ -53,7 +53,7 @@ class _KidsHomeState extends State<KidsHome> {
   List<Widget> _screens(String kidName, String avatar) {
     return [
       buildHomeScreen(kidName, avatar),
-      KidsProfilePage(kidName: kidName, avatar: avatar),
+      ProfileViewScreen(kidName: kidName, avatar: avatar),
     ];
   }
 

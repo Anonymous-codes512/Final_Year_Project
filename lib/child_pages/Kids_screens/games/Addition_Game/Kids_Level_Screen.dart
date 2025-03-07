@@ -1,3 +1,4 @@
+import 'package:final_year_project/child_pages/check_subscription.dart';
 import 'package:flutter/material.dart';
 import 'game_screen.dart';
 import 'package:lottie/lottie.dart';
@@ -187,24 +188,38 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
   ) {
     return GestureDetector(
       onTap: () async {
-        int levelLimit =
-            levelLimits[level] ?? 3; // Default to 3 if limit is not found
-
-        if ((levelPlayCount[level] ?? 0) < levelLimit) {
-          await _incrementLevelCount(level);
+        if (level == 'Hard' || level == 'Advanced') {
+          // Redirect to the subscription screen
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => GameScreen(
-                level: level,
-                themeColor: color,
-                userId: widget.userId,
+              builder: (context) => CheckSubscriptionScreen(
                 parentEmail: widget.parentEmail,
-              ),
+                themeColor: color,
+                level: level,
+                userId: widget.userId,
+              ), // Your subscription screen
             ),
           );
         } else {
-          _showLimitPopup(level);
+          int levelLimit =
+              levelLimits[level] ?? 3; // Default to 3 if limit is not found
+          if ((levelPlayCount[level] ?? 0) < levelLimit) {
+            await _incrementLevelCount(level);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GameScreen(
+                  level: level,
+                  themeColor: color,
+                  userId: widget.userId,
+                  parentEmail: widget.parentEmail,
+                ),
+              ),
+            );
+          } else {
+            _showLimitPopup(level);
+          }
         }
       },
       child: Container(
