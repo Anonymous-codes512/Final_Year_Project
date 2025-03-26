@@ -55,6 +55,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           selectedAvatar = profileData['avatar'] ?? widget.avatar;
           isLoading = false;
         });
+      } else {
+        setState(() {
+          nameController.text = widget.kidName;
+          hobbyController.text = 'Hobby';
+          favoriteSubjectController.text = 'Favorite Subject';
+          selectedGender = 'Male';
+          selectedAvatar = widget.avatar;
+          isLoading = false;
+        });
       }
     } catch (e) {
       ScaffoldMessenger.of(context)

@@ -24,67 +24,103 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
   @override
   void initState() {
     super.initState();
-    _loadLevelCounts();
-    _fetchLevelLimits(); // Fetch the level limits from Firebase
+    _initializeLevelData();
+  }
+
+  Future<void> _initializeLevelData() async {
+    await _loadLevelLimits();
+    await _loadLevelCounts();
   }
 
   // Load play counts from SharedPreferences
-  Future<void> _loadLevelCounts() async {
+  Future<void> _loadLevelLimits() async {
     final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    for (var level in ['Easy', 'Medium', 'Hard', 'Advanced']) {
-      levelPlayCount[level] =
-          prefs.getInt('${widget.userId}_${level}_$today') ?? 0;
-    }
-    setState(() {});
-  }
+    final parentEmail = widget.parentEmail.toLowerCase().trim();
+    levelLimits.clear();
 
-  // Fetch the daily play limits for each level from Firebase
-  Future<void> _fetchLevelLimits() async {
     try {
-      // Fetch the parent document using parentEmail
       final parentDoc = await FirebaseFirestore.instance
           .collection('users')
-          .where('email', isEqualTo: widget.parentEmail.toLowerCase().trim())
+          .where('email', isEqualTo: parentEmail)
           .get();
 
       if (parentDoc.docs.isNotEmpty) {
         final parentData = parentDoc.docs.first.data();
 
-        // Fetch limit for the specific game (AdditionaGame in this case)
-        final additionaGameLimit = parentData['AdditionaGame']?['Limit'] ??
-            3; // Default to 3 if not found
-        print("AdditionaGame Limit: $additionaGameLimit");
+        parentData.forEach((key, value) {
+          // Ensure we process keys related to any game with 'game-level' format
+          if (key.contains('-') && value is Map && value.containsKey('Limit')) {
+            String level =
+                key.split('-')[1]; // Extract 'easy', 'medium', or 'hard'
+            int limit = value['Limit'];
 
-        // Save the limit in SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt(
-            '${widget.userId}_AdditionaGame_limit', additionaGameLimit);
+            // Debugging log to check what keys are being processed
+            print("Processing limit for $key: $limit");
 
-        // Optionally, update the local variable (if you need to use it in the app)
-        setState(() {
-          levelLimits = {
-            'AdditionaGame': additionaGameLimit,
-          };
+            // Only process limits for games, so we store them
+            if (key.startsWith('AdditionaGame-')) {
+              levelLimits[level] = limit;
+              print("Set limit for AdditionaGame-$level: $limit"); // Debug log
+            } else if (key.startsWith('catch_the_ball-')) {
+              levelLimits[level] = limit;
+              print("Set limit for catch_the_ball-$level: $limit"); // Debug log
+            } else if (key.startsWith('shape_game-')) {
+              levelLimits[level] = limit;
+              print("Set limit for shape_game-$level: $limit"); // Debug log
+            }
+
+            // Save to SharedPreferences for fallback
+            prefs.setInt('${widget.userId}_$key', limit);
+          }
         });
       } else {
         print("🚨 Parent document not found in Firestore.");
       }
     } catch (e) {
-      print("⚠️ Error fetching level limits from Firestore: $e");
+      print("⚠️ Error fetching limits from Firestore: $e");
     }
+
+    // Debugging log to check if limits are loaded correctly
+    print("Level Limits: $levelLimits");
+
+    setState(() {});
   }
 
-  // Increment the level play count and save it to SharedPreferences
+  Future<void> _loadLevelCounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    levelPlayCount.clear();
+
+    for (var level in levelLimits.keys) {
+      int count =
+          prefs.getInt('${widget.userId}_additionaGame_${level}_$today') ?? 0;
+      levelPlayCount[level] = count;
+
+      // Debugging log to show the count for each level
+      print("Level '$level' played count for today: $count");
+    }
+
+    setState(() {});
+  }
+
   Future<void> _incrementLevelCount(String level) async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().substring(0, 10);
-    final key = '${widget.userId}_${level}_$today';
-    int count = (prefs.getInt(key) ?? 0) + 1;
+    final key = '${widget.userId}_additionaGame_${level}_$today';
+    int count = (levelPlayCount[level] ?? 0);
+
+    // Debugging log before increment
+    print("Before increment: Level '$level' count = $count");
+
+    count += 1;
     await prefs.setInt(key, count);
+
     setState(() {
       levelPlayCount[level] = count;
     });
+
+    // Debugging log after increment
+    print("After increment: Level '$level' count = $count");
   }
 
   // Show popup when daily limit is reached
@@ -160,14 +196,14 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
                       'Hard',
                     ),
                     const SizedBox(height: 15),
-                    _buildLevelCard(
-                      context,
-                      'Advanced',
-                      Icons.star,
-                      'Only for the best players!',
-                      Colors.red.shade400,
-                      'Advanced',
-                    ),
+                    // _buildLevelCard(
+                    //   context,
+                    //   'Advanced',
+                    //   Icons.star,
+                    //   'Only for the best players!',
+                    //   Colors.red.shade400,
+                    //   'Advanced',
+                    // ),
                   ],
                 ),
               ),
@@ -188,24 +224,36 @@ class _KidsLevelScreenState extends State<KidsLevelScreen> {
   ) {
     return GestureDetector(
       onTap: () async {
-        if (level == 'Hard' || level == 'Advanced') {
-          // Redirect to the subscription screen
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CheckSubscriptionScreen(
-                parentEmail: widget.parentEmail,
-                themeColor: color,
-                level: level,
-                userId: widget.userId,
-              ), // Your subscription screen
-            ),
-          );
+        await _initializeLevelData(); // Always fetch fresh data
+
+        int levelLimit = levelLimits[level.toLowerCase()] ?? 3;
+        int playedCount = levelPlayCount[level.toLowerCase()] ?? 0;
+
+        // Debugging log to show the current level limit and count
+        print(
+            "Checking level '$level' - Limit: $levelLimit, Played count: $playedCount");
+
+        if (level == 'Hard') {
+          if (playedCount < levelLimit) {
+            await _incrementLevelCount(level.toLowerCase());
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CheckSubscriptionScreen(
+                  parentEmail: widget.parentEmail,
+                  themeColor: color,
+                  level: level,
+                  userId: widget.userId,
+                  gameName: 'Additional_game',
+                ),
+              ),
+            );
+          } else {
+            _showLimitPopup(level);
+          }
         } else {
-          int levelLimit =
-              levelLimits[level] ?? 3; // Default to 3 if limit is not found
-          if ((levelPlayCount[level] ?? 0) < levelLimit) {
-            await _incrementLevelCount(level);
+          if (playedCount < levelLimit) {
+            await _incrementLevelCount(level.toLowerCase());
             Navigator.push(
               context,
               MaterialPageRoute(

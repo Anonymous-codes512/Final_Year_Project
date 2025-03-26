@@ -30,71 +30,67 @@ class _ResultScreenShapeState extends State<ResultScreenShape> {
 
   Future<void> _getHighScore() async {
     String? userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      // Correct Firestore path to read data
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('games')
-          .doc('shapes game')
-          .collection('score')
-          .doc('score') // Using a fixed doc ID to store the score data
-          .get();
+    // Correct Firestore path to read data
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('games')
+        .doc('shapes game')
+        .collection('score')
+        .doc('score') // Using a fixed doc ID to store the score data
+        .get();
 
-      if (snapshot.exists) {
-        int storedHighScore = snapshot['highestScore'] ?? 0;
-        setState(() {
-          highScore = storedHighScore;
-        });
+    if (snapshot.exists) {
+      int storedHighScore = snapshot['highestScore'] ?? 0;
+      setState(() {
+        highScore = storedHighScore;
+      });
 
-        // If the new score is higher, update it
-        if (widget.score > storedHighScore) {
-          await _updateScores(widget.score);
-          setState(() {
-            highScore = widget.score;
-            highScoreMessage = 'New High Score!';
-            isNewHighScore = true;
-          });
-        }
-      } else {
-        // If no data exists, initialize it
+      // If the new score is higher, update it
+      if (widget.score > storedHighScore) {
         await _updateScores(widget.score);
+        setState(() {
+          highScore = widget.score;
+          highScoreMessage = 'New High Score!';
+          isNewHighScore = true;
+        });
       }
+    } else {
+      // If no data exists, initialize it
+      await _updateScores(widget.score);
     }
   }
 
   Future<void> _updateScores(int newScore) async {
     String? userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      // Correct Firestore path to save data
-      DocumentReference gameDoc = FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('games')
-          .doc('shapes game')
-          .collection('score')
-          .doc('score'); // Fixed document ID
+    // Correct Firestore path to save data
+    DocumentReference gameDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('games')
+        .doc('shapes game')
+        .collection('score')
+        .doc('score'); // Fixed document ID
 
-      DocumentSnapshot snapshot = await gameDoc.get();
-      List<int> latestScores = [];
+    DocumentSnapshot snapshot = await gameDoc.get();
+    List<int> latestScores = [];
 
-      if (snapshot.exists) {
-        latestScores = List<int>.from(snapshot['latestScores'] ?? []);
-      }
-
-      latestScores.add(newScore);
-      if (latestScores.length > 5) {
-        latestScores.removeAt(0); // Keep the last 5 scores only
-      }
-
-      await gameDoc.set({
-        'highestScore': (newScore > highScore) ? newScore : highScore,
-        'latestScores': latestScores,
-        'lastUpdated': FieldValue.serverTimestamp(),
-      });
-
-      print("Score saved at: ${gameDoc.path}");
+    if (snapshot.exists) {
+      latestScores = List<int>.from(snapshot['latestScores'] ?? []);
     }
+
+    latestScores.add(newScore);
+    if (latestScores.length > 5) {
+      latestScores.removeAt(0); // Keep the last 5 scores only
+    }
+
+    await gameDoc.set({
+      'highestScore': (newScore > highScore) ? newScore : highScore,
+      'latestScores': latestScores,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    });
+
+    print("Score saved at: ${gameDoc.path}");
   }
 
   @override

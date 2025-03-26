@@ -24,7 +24,13 @@ class ProfileViewScreen extends StatelessWidget {
       if (profileSnapshot.exists) {
         return profileSnapshot.data() as Map<String, dynamic>;
       } else {
-        return {}; // return empty if no profile exists
+        return {
+          'name': kidName,
+          'avatar': avatar,
+          'hobby': 'Hobby',
+          'favorite_subject': 'Favorite Subject',
+          'gender': 'Male'
+        }; // Return default values
       }
     } catch (e) {
       throw Exception("Error fetching profile");

@@ -10,11 +10,11 @@ class SetGameLimit extends StatefulWidget {
 }
 
 class _SetGameLimitState extends State<SetGameLimit> {
-  void _saveGameLimit(String gameName, int limit) async {
+  void _saveGameLimit(String gameName, int limit, String difficulty) async {
     String userId = FirebaseAuth.instance.currentUser?.uid ?? "guest";
     await FirebaseFirestore.instance.collection('users').doc(userId).set(
       {
-        gameName: {'Limit': limit}
+        '$gameName-$difficulty': {'Limit': limit}
       },
       SetOptions(merge: true),
     );
@@ -22,6 +22,7 @@ class _SetGameLimitState extends State<SetGameLimit> {
 
   void _showLimitDialog(String gameName) {
     final TextEditingController controller = TextEditingController();
+    String selectedDifficulty = 'easy';
 
     showDialog(
       context: context,
@@ -35,17 +36,37 @@ class _SetGameLimitState extends State<SetGameLimit> {
             style: TextStyle(
                 fontWeight: FontWeight.bold, color: Colors.blueAccent),
           ),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Enter Limit',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blueAccent, width: 2),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButton<String>(
+                value: selectedDifficulty,
+                items: ['easy', 'medium', 'hard']
+                    .map((difficulty) => DropdownMenuItem(
+                          value: difficulty,
+                          child: Text(difficulty.toUpperCase()),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => selectedDifficulty = value);
+                  }
+                },
               ),
-            ),
+              SizedBox(height: 10),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Enter Limit',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blueAccent, width: 2),
+                  ),
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -62,11 +83,11 @@ class _SetGameLimitState extends State<SetGameLimit> {
               onPressed: () async {
                 final value = int.tryParse(controller.text);
                 if (value != null && value > 0) {
-                  _saveGameLimit(gameName, value); // Save to Firebase
-
+                  _saveGameLimit(gameName, value, selectedDifficulty);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text('Limit set to $value for $gameName')),
+                        content: Text(
+                            'Limit set to $value for $gameName-$selectedDifficulty')),
                   );
                   Navigator.of(context).pop();
                 } else {
@@ -76,10 +97,7 @@ class _SetGameLimitState extends State<SetGameLimit> {
                   );
                 }
               },
-              child: Text(
-                'Set',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: Text('Set', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -148,7 +166,7 @@ class _SetGameLimitState extends State<SetGameLimit> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: ListTile(
-          leading: Icon(icon, size: 30), // Added icon
+          leading: Icon(icon, size: 30),
           title: Text(showName, style: TextStyle(fontWeight: FontWeight.bold)),
           trailing: Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () => _showLimitDialog(gameName),

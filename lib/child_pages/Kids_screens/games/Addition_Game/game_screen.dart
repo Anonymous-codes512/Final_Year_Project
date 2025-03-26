@@ -253,7 +253,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               // Timer and Score Section
               Container(
                 width: MediaQuery.of(context).size.width,
-                height: 300,
+                height: 200,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
@@ -283,7 +283,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   children: [
                     Image.asset(
                       'assets/timer.gif',
-                      height: 100,
+                      height: 75,
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -339,8 +339,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               const SizedBox(height: 20),
               // Equation & Answer Input
               Container(
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.all(20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: const BorderRadius.only(
@@ -379,12 +380,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 5),
                     ElevatedButton(
                       onPressed: _checkAnswer,
                       child: const Text('Submit'),
                     ),
-                    const SizedBox(height: 10),
                     Text(
                       _feedback,
                       style: TextStyle(fontSize: 18, color: _feedbackColor),

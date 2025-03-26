@@ -1,3 +1,4 @@
+import 'package:final_year_project/child_pages/Kids_screens/games/car_game/car_game.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'subscription_plan_screen.dart';
@@ -8,6 +9,8 @@ class CheckSubscriptionScreen extends StatefulWidget {
   final Color themeColor;
   final String level;
   final String userId;
+  final String gameName;
+  final String? carImage; // asset path for the car image
 
   const CheckSubscriptionScreen({
     super.key,
@@ -15,6 +18,8 @@ class CheckSubscriptionScreen extends StatefulWidget {
     required this.themeColor,
     required this.level,
     required this.userId,
+    required this.gameName,
+    this.carImage,
   });
 
   @override
@@ -49,12 +54,23 @@ class _CheckSubscriptionScreenState extends State<CheckSubscriptionScreen> {
         _navigateToScreen(
             SubscriptionPlanScreen(themeColor: widget.themeColor));
       } else {
-        _navigateToScreen(GameScreen(
-          level: widget.level,
-          themeColor: widget.themeColor,
-          userId: widget.userId,
-          parentEmail: widget.parentEmail,
-        ));
+        if (widget.gameName == 'Additional_game') {
+          _navigateToScreen(GameScreen(
+            level: widget.level,
+            themeColor: widget.themeColor,
+            userId: widget.userId,
+            parentEmail: widget.parentEmail,
+          ));
+        } else if (widget.gameName == 'catch_the_ball') {
+          _navigateToScreen(
+            KidCarGame(
+              level: widget.level,
+              carImage: widget.carImage!,
+              userId: widget.userId,
+              parentEmail: widget.parentEmail,
+            ),
+          );
+        }
       }
     } catch (e) {
       print("Error fetching subscription: $e");
