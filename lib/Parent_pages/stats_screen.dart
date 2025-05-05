@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class StatsScreen extends StatefulWidget {
   final Map<String, dynamic> childData;
@@ -35,9 +38,13 @@ class _StatsScreenState extends State<StatsScreen> {
   void _onGameSelected(String? newGame) {
     setState(() {
       selectedGame = newGame;
-      selectedLevel = null; // Reset level when a new game is selected
-      levelNames =
-          widget.childData['gameData'][selectedGame]?.keys.toList() ?? [];
+      selectedLevel = null;
+      var levelMap = widget.childData['gameData'][selectedGame];
+      if (levelMap is Map<String, dynamic>) {
+        levelNames = levelMap.keys.toList();
+      } else {
+        levelNames = [];
+      }
     });
   }
 
@@ -79,22 +86,73 @@ class _StatsScreenState extends State<StatsScreen> {
               _buildDropdown(
                   "Select Level", levelNames, selectedLevel, _onLevelSelected),
               SizedBox(height: 20),
-              SizedBox(
-                height: 500,
+              Expanded(
                 child: Container(
                   padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                      color: Color(0xffffffff),
-                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
                   child: selectedGame != null && selectedLevel != null
-                      ? _buildScoreList(
+                      ? _buildScoreChart(
                           widget.childData, selectedGame!, selectedLevel!)
                       : Center(
-                          child: Text("Select a game and level to view scores",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.w500))),
+                          child: Text(
+                            "Select a game and level to view scores",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w500),
+                          ),
+                        ),
                 ),
               ),
+              SizedBox(height: 12),
+              if (selectedGame != null && selectedLevel != null)
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Builder(
+                    builder: (_) {
+                      final scores = _getScores();
+                      if (scores.isEmpty) {
+                        return Text(
+                          "No data found for this selection.",
+                          style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold),
+                        );
+                      }
+
+                      double avg = scores
+                              .map((e) => (e['score'] ?? 0).toDouble())
+                              .fold(0.0, (a, b) => a + b) /
+                          scores.length;
+
+                      double highest = scores
+                          .map((e) => (e['score'] ?? 0).toDouble())
+                          .reduce((a, b) => a > b ? a : b);
+
+                      double lowest = scores
+                          .map((e) => (e['score'] ?? 0).toDouble())
+                          .reduce((a, b) => a < b ? a : b);
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Summary for $selectedGame - $selectedLevel:",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          SizedBox(height: 6),
+                          Text("📊 Average Score: ${avg.toStringAsFixed(1)}"),
+                          Text("🏆 Highest Score: $highest"),
+                          Text("📉 Lowest Score: $lowest"),
+                        ],
+                      );
+                    },
+                  ),
+                ),
             ],
           ),
         ),
@@ -137,13 +195,12 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  Widget _buildScoreList(
+  Widget _buildScoreChart(
       Map<String, dynamic> childData, String game, String level) {
     List<Map<String, dynamic>> scoresList = [];
 
     if (childData.containsKey('gameData') &&
         childData['gameData'] is Map &&
-        childData['gameData'].containsKey(game) &&
         childData['gameData'][game] is Map &&
         childData['gameData'][game].containsKey(level)) {
       var levelData = childData['gameData'][game][level];
@@ -151,7 +208,9 @@ class _StatsScreenState extends State<StatsScreen> {
       if (levelData is List) {
         scoresList = levelData
             .map((entry) => {
-                  "date": entry["timestamp"] ?? entry["date"] ?? "Unknown Date",
+                  "date": entry["timestamp"] is Timestamp
+                      ? (entry["timestamp"] as Timestamp).toDate()
+                      : entry["timestamp"] ?? entry["date"] ?? "Unknown",
                   "score": entry["score"] ?? 0
                 })
             .toList();
@@ -168,37 +227,144 @@ class _StatsScreenState extends State<StatsScreen> {
       }
     }
 
-    return scoresList.isNotEmpty
-        ? ListView.builder(
-            itemCount: scoresList.length,
-            itemBuilder: (context, index) {
-              var entry = scoresList[index];
-              return Card(
-                color: const Color(0xFFDADADA), // Changed Card color to blue
-                elevation: 4,
-                // margin: EdgeInsets.symmetric(vertical: 8, horizontal: 5),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Color(0xFF332F46),
-                    child: Icon(Icons.date_range, color: Colors.white),
-                  ),
-                  title: Text("Date: ${entry['date']}",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Text("Score: ${entry['score']}",
-                      style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+    if (scoresList.isEmpty) return _noDataMessage();
+
+    scoresList.sort((a, b) {
+      final aDate = a['date'];
+      final bDate = b['date'];
+      if (aDate is DateTime && bDate is DateTime) {
+        return aDate.compareTo(bDate);
+      }
+      return 0;
+    });
+
+    List<FlSpot> spots = [];
+    List<String> dateLabels = [];
+
+    for (int i = 0; i < scoresList.length; i++) {
+      final score = scoresList[i]['score'] ?? 0;
+      final date = scoresList[i]['date'];
+      String formattedDate =
+          date is DateTime ? DateFormat('dd/MM').format(date) : date.toString();
+      spots.add(FlSpot(i.toDouble(), score.toDouble()));
+      dateLabels.add(formattedDate);
+    }
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final chartWidth = scoresList.length * 90;
+    final minWidth = screenWidth * 0.9;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: (chartWidth < minWidth ? minWidth : chartWidth).toDouble(),
+          height: 500,
+          child: LineChart(
+            LineChartData(
+              minY: (spots.map((e) => e.y).reduce((a, b) => a < b ? a : b) - 10)
+                  .floorToDouble(),
+              maxY:
+                  ((spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) / 25)
+                              .ceil() +
+                          1) *
+                      25,
+              gridData: FlGridData(show: true),
+              borderData: FlBorderData(show: false),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  color: Colors.deepPurple,
+                  dotData: FlDotData(show: true),
+                  belowBarData: BarAreaData(
+                      show: true, color: Colors.deepPurple.withOpacity(0.2)),
+                  barWidth: 3,
                 ),
-              );
-            },
-          )
-        : Center(
-            child: Text('No data available',
-                style: TextStyle(
-                    color: Colors.redAccent,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold)),
-          );
+              ],
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: 25,
+                    reservedSize: 40,
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: 2,
+                    getTitlesWidget: (value, meta) {
+                      int index = value.toInt();
+                      if (index >= 0 && index < dateLabels.length) {
+                        return SideTitleWidget(
+                          fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+                          space: 6,
+                          meta: meta,
+                          child: Text(
+                            dateLabels[index],
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        );
+                      }
+                      return SizedBox.shrink();
+                    },
+                  ),
+                ),
+                topTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getScores() {
+    List<Map<String, dynamic>> scoresList = [];
+
+    if (widget.childData.containsKey('gameData') &&
+        widget.childData['gameData'] is Map &&
+        widget.childData['gameData'][selectedGame] is Map &&
+        widget.childData['gameData'][selectedGame].containsKey(selectedLevel)) {
+      var levelData = widget.childData['gameData'][selectedGame][selectedLevel];
+
+      if (levelData is List) {
+        scoresList = levelData
+            .map((entry) => {
+                  "date": entry["timestamp"] is Timestamp
+                      ? (entry["timestamp"] as Timestamp).toDate()
+                      : entry["timestamp"] ?? entry["date"] ?? "Unknown",
+                  "score": entry["score"] ?? 0
+                })
+            .toList();
+      } else if (levelData is Map) {
+        if (levelData.containsKey("lastScores")) {
+          scoresList = List<Map<String, dynamic>>.from(levelData["lastScores"]);
+        } else if (levelData.containsKey("scores")) {
+          scoresList = List<Map<String, dynamic>>.from(levelData["scores"]);
+        } else if (levelData.containsKey("highestScore")) {
+          scoresList = [
+            {"date": "N/A", "score": levelData["highestScore"]}
+          ];
+        }
+      }
+    }
+
+    return scoresList;
+  }
+
+  Widget _noDataMessage() {
+    return const Center(
+      child: Text(
+        'No data available',
+        style: TextStyle(
+            color: Colors.redAccent, fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+    );
   }
 }
